@@ -3,15 +3,12 @@
 #include <memory>
 #include <thread>
 #include <vector>
-#include <functional>
 #include <set>
 #include <map>
 #include <unordered_set>
 #include <unordered_map>
 #include <cassert>
-
-
-
+#include <functional>
 
 #include "EasyGuiExport.h"
 #include "Queue.h"

@@ -23,10 +23,10 @@ TEST_CASE("ThreadTaskQueue")
     {
         std::this_thread::yield();
     }
-            work_thread.join();
-            while (CurrentThreadTaskQueueRef().ProcessTask() == 0)
-            {
-                std::this_thread::yield();
-            }
+    work_thread.join();
+    while (CurrentThreadTaskQueueRef().ProcessTask() == 0)
+    {
+        std::this_thread::yield();
+    }
 }
 

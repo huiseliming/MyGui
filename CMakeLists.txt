@@ -59,19 +59,16 @@ target_include_directories(EasyGui PUBLIC
 target_include_directories(EasyGui PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/third_party/imgui)
 
 find_package(spdlog CONFIG REQUIRED)
-target_link_libraries(EasyGui PUBLIC spdlog::spdlog)
+target_link_libraries(EasyGui PUBLIC spdlog::spdlog spdlog::spdlog_header_only)
 
 find_package(glfw3 CONFIG REQUIRED)
 target_link_libraries(EasyGui PUBLIC glfw)
 
 find_package(glm CONFIG REQUIRED)
-target_link_libraries(EasyGui PRIVATE glm::glm)
+target_link_libraries(EasyGui PUBLIC glm::glm)
 
 find_package(Vulkan REQUIRED)
 target_link_libraries(EasyGui PUBLIC Vulkan::Vulkan)
-
-find_package(vk-bootstrap CONFIG REQUIRED)
-target_link_libraries(EasyGui PRIVATE vk-bootstrap::vk-bootstrap)
 
 include(GenerateExportHeader)
 generate_export_header(EasyGui

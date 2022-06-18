@@ -180,7 +180,11 @@ void VulkanGuiApplication::ImGui_Startup()
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
 	ImGuiIO& io = ImGui::GetIO(); (void)io;
+
+	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+	io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
 	ImGui::StyleColorsDark();
+
 	ImGui_CreateDescriptorPool();
 	ImGui_CreateRenderPass();
 	ImGui_CreateFramebuffer();
@@ -213,8 +217,14 @@ void VulkanGuiApplication::ImGui_RenderFrame()
 	ImGui_ImplVulkan_NewFrame();
 	ImGui_ImplGlfw_NewFrame();
 	ImGui::NewFrame();
-	ImGui::ShowDemoWindow();
+	ImGui_Draw();
 	ImGui::Render();
+
+	if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+	{
+		ImGui::UpdatePlatformWindows();
+		ImGui::RenderPlatformWindowsDefault();
+	}
 }
 
 void VulkanGuiApplication::ImGui_Cleanup()
@@ -234,6 +244,14 @@ void VulkanGuiApplication::ImGui_Cleanup()
 	ImGui_ImplVulkan_Shutdown();
 	ImGui_ImplGlfw_Shutdown();
 	ImGui::DestroyContext();
+}
+
+void VulkanGuiApplication::ImGui_Draw()
+{
+	for (auto& Drawable : Drawables)
+	{
+		Drawable->Draw();
+	}
 }
 
 bool VulkanGuiApplication::CheckValidationLayerSupport() {

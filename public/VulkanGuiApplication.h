@@ -1,5 +1,6 @@
 #pragma once
 #include "EasyGuiForward.h"
+#include "ImGuiDrawable.h"
 #include <spdlog/spdlog.h>
 
 #define IMGUI_API EASYGUI_API
@@ -60,6 +61,11 @@ private:
 	std::vector<vk::CommandBuffer> _ImGuiCommandBuffers;
 	std::vector<vk::Framebuffer> _ImGuiFramebuffers;
 
+	// Draw logic
+	void ImGui_Draw();
+public:
+	std::vector<std::shared_ptr<ImGuiDrawable>> Drawables;
+private:
 	// Tools
 	bool CheckValidationLayerSupport();
 	bool FindQueueFamily(std::vector<vk::QueueFamilyProperties, std::allocator<vk::QueueFamilyProperties>> queue_family_properties);

@@ -4,7 +4,7 @@
 
 
 
-class ImGuiDrawable
+class GuiDrawObject
 {
 public:
 	virtual void Draw() {}

@@ -1,8 +1,36 @@
 #include "VulkanGuiApplication.h"
 #include "../third_party/imgui/backends/imgui_impl_vulkan.h"
 #include "../third_party/imgui/backends/imgui_impl_glfw.h"
+#ifdef _WIN32
+#include <MinHook.h>
+#endif // _WIN32
+
+static VulkanGuiApplication* S_VulkanGuiApplication;
+
+VkSurfaceFormatKHR ImGui_ImplVulkanH_SelectSurfaceFormat_HookFunction(VkPhysicalDevice physical_device, VkSurfaceKHR surface, const VkFormat* request_formats, int request_formats_count, VkColorSpaceKHR request_color_space)
+{
+	return S_VulkanGuiApplication->SurfaceFormatRef().operator VkSurfaceFormatKHR &();
+}
+
+static void HookImGuiFunction(VulkanGuiApplication* vulkan_gui_application)
+{
+	S_VulkanGuiApplication = vulkan_gui_application;
+#ifdef _WIN32
+	MH_CreateHook(&ImGui_ImplVulkanH_SelectSurfaceFormat, &ImGui_ImplVulkanH_SelectSurfaceFormat_HookFunction, nullptr);
+	MH_EnableHook(&ImGui_ImplVulkanH_SelectSurfaceFormat);
+#endif // _WIN32
+}
+
+static void UnhookImGuiFunction()
+{
+#ifdef _WIN32
+	MH_DisableHook(&ImGui_ImplVulkanH_SelectSurfaceFormat);
+#endif // _WIN32
+}
 
 bool VulkanGuiApplication::Startup(int32_t ArgC, const char* ArgV[]) {
+	MH_Initialize();
+	HookImGuiFunction(this);
 	glfwInit();
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 	_GLFWwindow = glfwCreateWindow(_Width, _Height, "Vulkan", nullptr, nullptr);
@@ -57,6 +85,8 @@ void VulkanGuiApplication::Cleanup() {
 	}
 	glfwDestroyWindow(_GLFWwindow);
 	glfwTerminate();
+	UnhookImGuiFunction();
+	MH_Uninitialize();
 }
 
 void VulkanGuiApplication::ImGui_CreateDescriptorPool()
@@ -154,6 +184,16 @@ void VulkanGuiApplication::ImGui_CreateFramebuffer()
 	}
 }
 
+void VulkanGuiApplication::ImGui_CleanupSwapChain()
+{
+	for (size_t i = 0; i < _ImGuiFramebuffers.size(); i++)
+	{
+		_Device.destroyFramebuffer(_ImGuiFramebuffers[i]);
+	}
+	_ImGuiFramebuffers.clear();
+	_Device.destroyRenderPass(_ImGuiRenderPass);
+}
+
 void VulkanGuiApplication::ImGui_RecordCommand(vk::CommandBuffer& command_buffer, uint32_t image_index)
 {
 	vk::ClearValue clear_value[] = {
@@ -234,12 +274,6 @@ void VulkanGuiApplication::ImGui_Cleanup()
 		_Device.freeCommandBuffers(_ImGuiCommandPool, _ImGuiCommandBuffers);
 		_Device.destroyCommandPool(_ImGuiCommandPool);
 	}
-	for (size_t i = 0; i < _ImGuiFramebuffers.size(); i++)
-	{
-		_Device.destroyFramebuffer(_ImGuiFramebuffers[i]);
-	}
-	_ImGuiFramebuffers.clear();
-	_Device.destroyRenderPass(_ImGuiRenderPass);
 	_Device.destroyDescriptorPool(_ImGuiDescriptorPool);
 	ImGui_ImplVulkan_Shutdown();
 	ImGui_ImplGlfw_Shutdown();
@@ -633,6 +667,7 @@ void VulkanGuiApplication::CreateCommandPoolAndAllocateCommandBuffer()
 
 void VulkanGuiApplication::CleanupSwapChain()
 {
+	ImGui_CleanupSwapChain();
 	for (size_t i = 0; i < _SwapchainFramebuffers.size(); i++)
 	{
 		_Device.destroyFramebuffer(_SwapchainFramebuffers[i]);
@@ -660,6 +695,8 @@ void VulkanGuiApplication::RecreateSwapchain()
 	CreateSwapchain();
 	CreateRenderPass();
 	CreateFramebuffers();
+	ImGui_CreateRenderPass();
+	ImGui_CreateFramebuffer();
 	ImGui_ImplVulkan_SetMinImageCount(_MinImageCount);
 }
 
@@ -686,8 +723,14 @@ void VulkanGuiApplication::RecordCommand(vk::CommandBuffer& command_buffer, uint
 void VulkanGuiApplication::DrawFrame()
 {
 	(void)_Device.waitForFences(_InFlightFences[_CurrentFrame], VK_TRUE, UINT64_MAX);
+	if (_FramebufferResized)
+	{
+		_FramebufferResized = false;
+		RecreateSwapchain();
+		return;
+	}
 	auto image_index_result_value = _Device.acquireNextImageKHR(_Swapchain, UINT64_MAX, _ImageAvailableSemaphores[_CurrentFrame], VK_NULL_HANDLE);
-	if (image_index_result_value.result == vk::Result::eErrorOutOfDateKHR || image_index_result_value.result == vk::Result::eSuboptimalKHR)
+	if (image_index_result_value.result == vk::Result::eSuboptimalKHR)
 	{
 		RecreateSwapchain();
 		return;
@@ -728,9 +771,8 @@ void VulkanGuiApplication::DrawFrame()
 	present_info.pResults = nullptr;
 	auto present_result = _PresentQueue.presentKHR(present_info);
 
-	if (present_result == vk::Result::eErrorOutOfDateKHR || present_result == vk::Result::eSuboptimalKHR || _FramebufferResized)
+	if (present_result == vk::Result::eSuboptimalKHR)
 	{
-		_FramebufferResized = false;
 		RecreateSwapchain();
 	}
 	else if (image_index_result_value.result != vk::Result::eSuccess) [[unlikely]]

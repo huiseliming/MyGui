@@ -1,7 +1,7 @@
 #pragma once
 #include "EasyGuiForward.h"
-#include "ImGuiDrawable.h"
-#include <spdlog/spdlog.h>
+#include "GuiDrawObject.h"
+#include <spdlog/spdlog.h> 
 
 #define IMGUI_API EASYGUI_API
 #define IMGUI_IMPL_API IMGUI_API
@@ -14,6 +14,8 @@
 constexpr static int MaxFramesInFlight = 2;
 
 static void FramebufferResizeCallback(GLFWwindow* window, int width, int height);
+
+EASYGUI_API VkSurfaceFormatKHR ImGui_ImplVulkanH_SelectSurfaceFormat_HookFunction(VkPhysicalDevice physical_device, VkSurfaceKHR surface, const VkFormat* request_formats, int request_formats_count, VkColorSpaceKHR request_color_space);
 
 class EASYGUI_API VulkanGuiApplication
 {
@@ -50,6 +52,7 @@ private:
 	void ImGui_CreateCommandPoolAndAllocateCommandBuffer();
 	void ImGui_CreateRenderPass();
 	void ImGui_CreateFramebuffer();
+	void ImGui_CleanupSwapChain();
 	void ImGui_RecordCommand(vk::CommandBuffer& command_buffer, uint32_t image_index);
 	void ImGui_Startup();
 	void ImGui_RenderFrame();
@@ -64,7 +67,7 @@ private:
 	// Draw logic
 	void ImGui_Draw();
 public:
-	std::vector<std::shared_ptr<ImGuiDrawable>> Drawables;
+	std::vector<std::shared_ptr<GuiDrawObject>> Drawables;
 private:
 	// Tools
 	bool CheckValidationLayerSupport();
@@ -89,11 +92,14 @@ private:
 	void RecordCommand(vk::CommandBuffer& command_buffer, uint32_t image_index);
 	void DrawFrame();
 
-
 	const std::vector<const char*> _ValidationLayers = {
 		"VK_LAYER_KHRONOS_validation"
 	};
+public:
+	// 
+	vk::SurfaceFormatKHR& SurfaceFormatRef() { return _SurfaceFormat; }
 
+private:
 #ifdef NDEBUG
 	const bool _EnableValidationLayers = false;
 #else

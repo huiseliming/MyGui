@@ -70,6 +70,9 @@ target_link_libraries(EasyGui PUBLIC glm::glm)
 find_package(Vulkan REQUIRED)
 target_link_libraries(EasyGui PUBLIC Vulkan::Vulkan)
 
+find_package(minhook CONFIG REQUIRED)
+target_link_libraries(EasyGui PRIVATE minhook::minhook)
+
 include(GenerateExportHeader)
 generate_export_header(EasyGui
     EXPORT_MACRO_NAME EASYGUI_API

@@ -5,13 +5,12 @@ class EASYGUI_API CoreApplication
 {
 public:
 	CoreApplication() = default;
+
 	virtual void Run(int& ArgC, const char* ArgV[]);
-
 	virtual bool Startup(int& ArgC, const char* ArgV[]);
-
 	virtual void MainLoop();
-
 	virtual void Cleanup();
+	virtual bool RequestExit();
 
 	ThreadTaskQueue* MainThreadTaskQueue() { return _MainThreadTaskQueue; }
 	const std::vector<std::string>& CommandLineArgsRef() { return _CommandLineArgs; }
@@ -28,9 +27,10 @@ public:
 		return false;
 	}
 
-private:
+protected:
 	ThreadTaskQueue* _MainThreadTaskQueue{ nullptr };
 	std::vector<std::string> _CommandLineArgs;
+	bool bRequestExit = false;
 };
 
 EASYGUI_API extern CoreApplication* GP_CoreApplication;

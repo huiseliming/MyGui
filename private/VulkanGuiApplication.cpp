@@ -28,7 +28,8 @@ static void UnhookImGuiFunction()
 #endif // _WIN32
 }
 
-bool VulkanGuiApplication::Startup(int32_t ArgC, const char* ArgV[]) {
+bool VulkanGuiApplication::Startup(int32_t& ArgC, const char* ArgV[]) {
+	CoreApplication::Startup(ArgC, ArgV);
 	MH_Initialize();
 	HookImGuiFunction(this);
 	glfwInit();
@@ -49,16 +50,15 @@ bool VulkanGuiApplication::Startup(int32_t ArgC, const char* ArgV[]) {
 }
 
 void VulkanGuiApplication::MainLoop() {
-	while (!glfwWindowShouldClose(_GLFWwindow)) {
-		glfwPollEvents();
-		int width = 0, height = 0;
-		glfwGetFramebufferSize(_GLFWwindow, &width, &height);
-		if (width != 0 || height != 0)
-		{
-			ImGui_RenderFrame();
-			DrawFrame();
-		}
+	glfwPollEvents();
+	int width = 0, height = 0;
+	glfwGetFramebufferSize(_GLFWwindow, &width, &height);
+	if (width != 0 || height != 0)
+	{
+		ImGui_RenderFrame();
+		DrawFrame();
 	}
+	CoreApplication::MainLoop();
 }
 
 void VulkanGuiApplication::Cleanup() {
@@ -87,6 +87,12 @@ void VulkanGuiApplication::Cleanup() {
 	glfwTerminate();
 	UnhookImGuiFunction();
 	MH_Uninitialize();
+	CoreApplication::Cleanup();
+}
+
+bool VulkanGuiApplication::RequestExit()
+{
+	return glfwWindowShouldClose(_GLFWwindow);
 }
 
 void VulkanGuiApplication::ImGui_CreateDescriptorPool()
@@ -223,8 +229,9 @@ void VulkanGuiApplication::ImGui_Startup()
 
 	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 	io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
+	io.Fonts->AddFontFromFileTTF("msyh.ttf", 15, NULL, io.Fonts->GetGlyphRangesChineseSimplifiedCommon());
+	
 	ImGui::StyleColorsDark();
-
 	ImGui_CreateDescriptorPool();
 	ImGui_CreateRenderPass();
 	ImGui_CreateFramebuffer();

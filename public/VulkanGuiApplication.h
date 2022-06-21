@@ -1,5 +1,6 @@
 #pragma once
 #include "EasyGuiForward.h"
+#include "CoreApplication.h"
 #include "GuiDrawObject.h"
 #include <spdlog/spdlog.h> 
 
@@ -17,15 +18,17 @@ static void FramebufferResizeCallback(GLFWwindow* window, int width, int height)
 
 EASYGUI_API VkSurfaceFormatKHR ImGui_ImplVulkanH_SelectSurfaceFormat_HookFunction(VkPhysicalDevice physical_device, VkSurfaceKHR surface, const VkFormat* request_formats, int request_formats_count, VkColorSpaceKHR request_color_space);
 
-class EASYGUI_API VulkanGuiApplication
+class EASYGUI_API VulkanGuiApplication : public CoreApplication
 {
 public:
-	void Run(int32_t ArgC, const char* ArgV[]) {
+	virtual void Run(int32_t& ArgC, const char* ArgV[]) override {
 		try
 		{
 			if (Startup(ArgC, ArgV))
 			{
-				MainLoop();
+				while (!RequestExit()) {
+					MainLoop();
+				}
 			}
 		}
 		catch (const std::exception& StdException)
@@ -34,12 +37,14 @@ public:
 		}
 		Cleanup();
 	}
+	GLFWwindow* GLFWwindowPtr() { return _GLFWwindow; }
 
-private:
+protected:
 
-	bool Startup(int32_t ArgC, const char* ArgV[]);
-	void MainLoop();
-	void Cleanup();
+	virtual bool Startup(int32_t& ArgC, const char* ArgV[]) override;
+	virtual void MainLoop() override;
+	virtual void Cleanup() override;
+	virtual bool RequestExit() override;
 
 	uint32_t _Width = 1280;
 	uint32_t _Height = 720;

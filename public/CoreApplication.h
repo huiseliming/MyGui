@@ -1,5 +1,6 @@
 #pragma once
 #include "EasyGuiForward.h"
+#include "spdlog/spdlog.h"
 
 class EASYGUI_API CoreApplication
 {
@@ -10,7 +11,8 @@ public:
 	virtual bool Startup(int& ArgC, const char* ArgV[]);
 	virtual void MainLoop();
 	virtual void Cleanup();
-	virtual bool RequestExit();
+	virtual bool IsRequestExit();
+	virtual void SetRequestExit();
 
 	ThreadTaskQueue* MainThreadTaskQueue() { return _MainThreadTaskQueue; }
 	const std::vector<std::string>& CommandLineArgsRef() { return _CommandLineArgs; }
@@ -23,6 +25,10 @@ public:
 		{
 			_MainThreadTaskQueue->EnqueueTask(std::bind(std::forward<Function>(task), std::forward<FunctionArgs>(task)...));
 			return true;
+		}
+		else
+		{
+			spdlog::error("CoreApplication::_MainThreadTaskQueue IS NULLPTR");
 		}
 		return false;
 	}

@@ -90,9 +90,14 @@ void VulkanGuiApplication::Cleanup() {
 	CoreApplication::Cleanup();
 }
 
-bool VulkanGuiApplication::RequestExit()
+bool VulkanGuiApplication::IsRequestExit()
 {
 	return glfwWindowShouldClose(_GLFWwindow);
+}
+
+void VulkanGuiApplication::SetRequestExit()
+{
+	glfwSetWindowShouldClose(_GLFWwindow, GLFW_TRUE);
 }
 
 void VulkanGuiApplication::ImGui_CreateDescriptorPool()
@@ -229,7 +234,7 @@ void VulkanGuiApplication::ImGui_Startup()
 
 	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 	io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
-	io.Fonts->AddFontFromFileTTF("msyh.ttf", 15, NULL, io.Fonts->GetGlyphRangesChineseSimplifiedCommon());
+	io.Fonts->AddFontFromFileTTF("fonts/msyh.ttf", 15, NULL, io.Fonts->GetGlyphRangesChineseSimplifiedCommon());
 	
 	ImGui::StyleColorsDark();
 	ImGui_CreateDescriptorPool();

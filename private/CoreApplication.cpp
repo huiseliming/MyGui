@@ -6,7 +6,7 @@ void CoreApplication::Run(int& ArgC, const char* ArgV[])
 {
 	if (Startup(ArgC, ArgV))
 	{
-		while (!RequestExit()) {
+		while (!IsRequestExit()) {
 			MainLoop();
 		}
 	}
@@ -30,8 +30,13 @@ void CoreApplication::Cleanup()
 {
 }
 
-bool CoreApplication::RequestExit()
+bool CoreApplication::IsRequestExit()
 {
 	return bRequestExit;
+}
+
+void CoreApplication::SetRequestExit()
+{
+	bRequestExit = true;
 }
 

@@ -26,7 +26,7 @@ public:
 		{
 			if (Startup(ArgC, ArgV))
 			{
-				while (!RequestExit()) {
+				while (!IsRequestExit()) {
 					MainLoop();
 				}
 			}
@@ -37,6 +37,7 @@ public:
 		}
 		Cleanup();
 	}
+
 	GLFWwindow* GLFWwindowPtr() { return _GLFWwindow; }
 
 protected:
@@ -44,7 +45,8 @@ protected:
 	virtual bool Startup(int32_t& ArgC, const char* ArgV[]) override;
 	virtual void MainLoop() override;
 	virtual void Cleanup() override;
-	virtual bool RequestExit() override;
+	virtual bool IsRequestExit() override;
+	virtual void SetRequestExit() override;
 
 	uint32_t _Width = 1280;
 	uint32_t _Height = 720;

@@ -73,6 +73,12 @@ target_link_libraries(EasyGui PUBLIC Vulkan::Vulkan)
 find_package(minhook CONFIG REQUIRED)
 target_link_libraries(EasyGui PRIVATE minhook::minhook)
 
+add_custom_command(TARGET EasyGui POST_BUILD
+  COMMAND ${CMAKE_COMMAND} -E copy_directory
+  ${CMAKE_CURRENT_SOURCE_DIR}/assets
+  ${CMAKE_CURRENT_BINARY_DIR}
+)
+
 include(GenerateExportHeader)
 generate_export_header(EasyGui
     EXPORT_MACRO_NAME EASYGUI_API
@@ -80,7 +86,3 @@ generate_export_header(EasyGui
 )
 
 add_subdirectory(tests)
-
-add_executable(EasyGuiApp Main.cpp)
-
-target_link_libraries(EasyGuiApp PUBLIC EasyGui)

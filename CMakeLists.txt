@@ -76,7 +76,7 @@ target_link_libraries(EasyGui PRIVATE minhook::minhook)
 add_custom_command(TARGET EasyGui POST_BUILD
   COMMAND ${CMAKE_COMMAND} -E copy_directory
   ${CMAKE_CURRENT_SOURCE_DIR}/assets
-  ${CMAKE_CURRENT_BINARY_DIR}
+  ${CMAKE_BINARY_DIR}
 )
 
 include(GenerateExportHeader)

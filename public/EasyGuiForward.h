@@ -13,6 +13,7 @@
 #include "EasyGuiExport.h"
 #include "Queue.h"
 #include "ThreadTaskQueue.h"
+#include "Reflect/Reflect.h"
 
 #ifdef _WIN32
 #define NOMINMAX

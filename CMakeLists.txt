@@ -18,7 +18,7 @@ endif(WIN32)
 message("CMAKE_TOOLCHAIN_FILE: " ${CMAKE_TOOLCHAIN_FILE})
 message("VCPKG_TARGET_TRIPLET: " ${VCPKG_TARGET_TRIPLET})
 
-project(EasyGui LANGUAGES C CXX)
+project(MyGui LANGUAGES C CXX)
 
 if(WIN32)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /MP")
@@ -49,40 +49,47 @@ set(ImGuiSource
     ${CMAKE_CURRENT_SOURCE_DIR}/third_party/imgui/imgui_tables.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/third_party/imgui/imgui_widgets.cpp)
 
-add_library(EasyGui ${PublicSource} ${PrivateSource} ${ImGuiSource})
+add_library(MyGui ${PublicSource} ${PrivateSource} ${ImGuiSource})
 
-target_include_directories(EasyGui PUBLIC
+source_group(
+  TREE ${CMAKE_CURRENT_SOURCE_DIR} 
+  PREFIX Source 
+  FILES ${PublicSource} ${PrivateSource} ${ImGuiSource}
+)
+
+
+target_include_directories(MyGui PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/public>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/public>
     $<INSTALL_INTERFACE:public>
 )
-target_include_directories(EasyGui PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/third_party/imgui)
+target_include_directories(MyGui PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/third_party/imgui)
 
 find_package(spdlog CONFIG REQUIRED)
-target_link_libraries(EasyGui PUBLIC spdlog::spdlog spdlog::spdlog_header_only)
+target_link_libraries(MyGui PUBLIC spdlog::spdlog spdlog::spdlog_header_only)
 
 find_package(glfw3 CONFIG REQUIRED)
-target_link_libraries(EasyGui PUBLIC glfw)
+target_link_libraries(MyGui PUBLIC glfw)
 
 find_package(glm CONFIG REQUIRED)
-target_link_libraries(EasyGui PUBLIC glm::glm)
+target_link_libraries(MyGui PUBLIC glm::glm)
 
 find_package(Vulkan REQUIRED)
-target_link_libraries(EasyGui PUBLIC Vulkan::Vulkan)
+target_link_libraries(MyGui PUBLIC Vulkan::Vulkan)
 
 find_package(minhook CONFIG REQUIRED)
-target_link_libraries(EasyGui PRIVATE minhook::minhook)
+target_link_libraries(MyGui PRIVATE minhook::minhook)
 
-add_custom_command(TARGET EasyGui POST_BUILD
+add_custom_command(TARGET MyGui POST_BUILD
   COMMAND ${CMAKE_COMMAND} -E copy_directory
   ${CMAKE_CURRENT_SOURCE_DIR}/assets
   ${CMAKE_BINARY_DIR}
 )
 
 include(GenerateExportHeader)
-generate_export_header(EasyGui
-    EXPORT_MACRO_NAME EASYGUI_API
-    EXPORT_FILE_NAME ${CMAKE_CURRENT_BINARY_DIR}/public/EasyGuiExport.h
+generate_export_header(MyGui
+    EXPORT_MACRO_NAME MYGUI_API
+    EXPORT_FILE_NAME ${CMAKE_CURRENT_BINARY_DIR}/public/MyGuiExport.h
 )
 
 add_subdirectory(tests)

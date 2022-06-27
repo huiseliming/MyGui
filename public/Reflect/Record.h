@@ -1,18 +1,23 @@
 #pragma once
 #include <any>
+#include <set>
+#include <unordered_set>
 #include <map>
+#include <unordered_map>
 #include <string>
 #include <vector>
 #include <cassert>
 #include <memory>
 #include <type_traits>
-#include <unordered_map>
 #include <typeinfo>
 #include <typeindex>
 
+#include "MyGuiExport.h"
+
 namespace Reflect
 {
-	class Record
+
+	class MYGUI_API Record
 	{
 	public:
 		Record(const std::string& name = "") : _Name(name) {}
@@ -35,11 +40,28 @@ namespace Reflect
 			}
 			return std::any();
 		}
-
+		template<typename T>
+		T GetAttributeValueAs(const std::string& attribute_name)
+		{
+			std::any attribute_any = GetAttributeValue(attribute_name);
+			if (attribute_any.has_value())
+			{
+				try
+				{
+					return std::any_cast<T>(attribute_any);
+				}
+				catch (const std::bad_any_cast& e)
+				{
+					return T();
+				}
+			}
+			return T();
+		}
 	protected:
 		//int64_t _Id{ 0 };
 		std::string _Name;
 		std::map<std::string, std::any> _AttributeMap;
+
 	};
 
 }

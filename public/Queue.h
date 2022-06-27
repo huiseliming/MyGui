@@ -1,7 +1,7 @@
 #pragma once
 #include <memory>
 #include <atomic>
-#include "EasyGuiExport.h"
+#include "MyGuiExport.h"
 
 enum EQueueMode
 {

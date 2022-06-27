@@ -1,10 +1,10 @@
 #pragma once
-#include "EasyGuiForward.h"
+#include "MyGuiForward.h"
 #include "CoreApplication.h"
 #include "GuiDrawObject.h"
 #include <spdlog/spdlog.h> 
 
-#define IMGUI_API EASYGUI_API
+#define IMGUI_API MYGUI_API
 #define IMGUI_IMPL_API IMGUI_API
 #include "../third_party/imgui/imgui.h"
 
@@ -16,9 +16,9 @@ constexpr static int MaxFramesInFlight = 2;
 
 static void FramebufferResizeCallback(GLFWwindow* window, int width, int height);
 
-EASYGUI_API VkSurfaceFormatKHR ImGui_ImplVulkanH_SelectSurfaceFormat_HookFunction(VkPhysicalDevice physical_device, VkSurfaceKHR surface, const VkFormat* request_formats, int request_formats_count, VkColorSpaceKHR request_color_space);
+MYGUI_API VkSurfaceFormatKHR ImGui_ImplVulkanH_SelectSurfaceFormat_HookFunction(VkPhysicalDevice physical_device, VkSurfaceKHR surface, const VkFormat* request_formats, int request_formats_count, VkColorSpaceKHR request_color_space);
 
-class EASYGUI_API VulkanGuiApplication : public CoreApplication
+class MYGUI_API VulkanGuiApplication : public CoreApplication
 {
 public:
 	virtual void Run(int32_t& ArgC, const char* ArgV[]) override {

@@ -57,16 +57,23 @@ namespace Reflect
         uint32_t GetCastTypeFlag() const { return _CastTypeFlag; }
         uint32_t GetMemorySize() const { return _MemorySize; }
 
+        void* New()                        { return _New(); }
+        void  Delete(void* A)              { _Delete(A); }
+        void  Constructor(void* A)         { _Constructor(A); }
+        void  Destructor(void* A)          { _Destructor(A); }
+        void  CopyAssign(void* A, void* B) { _CopyAssign(A, B); }
+        void  MoveAssign(void* A, void* B) { _MoveAssign(A, B); }
+
 	protected:
 		uint32_t _CastTypeFlag;
 		uint32_t _MemorySize;
 
-		void* (*New)        (            );
-		void  (*Delete)     (void*       );
-		void  (*Constructor)(void*       );
-		void  (*Destructor) (void*       );
-		void  (*CopyAssign) (void*, void*);
-		void  (*MoveAssign) (void*, void*);
+		void* (*_New)        (            );
+		void  (*_Delete)     (void*       );
+		void  (*_Constructor)(void*       );
+		void  (*_Destructor) (void*       );
+		void  (*_CopyAssign) (void*, void*);
+		void  (*_MoveAssign) (void*, void*);
     private:
         template<typename T> friend Type* GetType();
 	};
@@ -78,12 +85,12 @@ namespace Reflect
         TType(const std::string& name = "") : Type(name)
         {
             _MemorySize = sizeof(CppType);
-            New         = &TType<CppType>::Private_New;
-            Delete      = &TType<CppType>::Private_Delete;
-            Constructor = &TType<CppType>::Private_Constructor;
-            Destructor  = &TType<CppType>::Private_Destructor;
-            CopyAssign  = &TType<CppType>::Private_CopyAssign;
-            MoveAssign  = &TType<CppType>::Private_MoveAssign;
+            _New         = &TType<CppType>::Private_New;
+            _Delete      = &TType<CppType>::Private_Delete;
+            _Constructor = &TType<CppType>::Private_Constructor;
+            _Destructor  = &TType<CppType>::Private_Destructor;
+            _CopyAssign  = &TType<CppType>::Private_CopyAssign;
+            _MoveAssign  = &TType<CppType>::Private_MoveAssign;
         }
     private:
         static void* Private_New        ()                 { return new CppType(); }

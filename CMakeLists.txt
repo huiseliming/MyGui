@@ -35,6 +35,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 file(GLOB_RECURSE PublicSource public/*.h)
 file(GLOB_RECURSE PrivateSource private/*.h private/*.cpp)
 
+add_subdirectory(code_generator)
 add_subdirectory(third_party)
 
 set(ImGuiSource
@@ -50,6 +51,33 @@ set(ImGuiSource
     ${CMAKE_CURRENT_SOURCE_DIR}/third_party/imgui/imgui_widgets.cpp)
 
 add_library(MyGui ${PublicSource} ${PrivateSource} ${ImGuiSource})
+
+find_program(
+    CODE_GENERATOR_EXECUTABLE
+    NAMES
+        MyCodeGenerator
+    DOC "MyCodeGenerator executable location"
+    PATHS ${CMAKE_CURRENT_SOURCE_DIR}/code_generator/
+)
+if(CODE_GENERATOR_EXECUTABLE)
+    message("CODE_GENERATOR_EXECUTABLE ${REFL_GENERATOR_EXECUTABLE}")
+else()
+    message(FATAL_ERROR "CODE_GENERATOR_EXECUTABLE ${REFL_GENERATOR_EXECUTABLE}")
+endif()
+
+set(ParsedFiles 
+    ${CMAKE_CURRENT_SOURCE_DIR}/public/Reflect/Struct.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/public/Reflect/Class.h
+)
+
+add_custom_target(MyGui-CodeGenerator
+    ALL
+    COMMAND ${CODE_GENERATOR_EXECUTABLE} ${CMAKE_BINARY_DIR} -MYGUI_API ${ParsedFiles}
+    DEPENDS ${ParsedFiles}
+    BYPRODUCTS ${GeneratedFiles}
+    COMMENT "working for refl generated ..."
+)
+add_dependencies(MyGui MyGui-CodeGenerator)
 
 source_group(
   TREE ${CMAKE_CURRENT_SOURCE_DIR} 

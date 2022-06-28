@@ -30,7 +30,7 @@ namespace Reflect
 	};
 
 	// @test begin
-	class TestStruct
+	class CLASS(dsdsdsds, sdsdsds, eee) TestStruct
 	{
 	private:
 		template<typename T> friend struct TCustomReflectModifier;
@@ -39,9 +39,13 @@ namespace Reflect
 		static Class* StaticClass();
 	public:
 
+		FIELD(aa, tt)
 		std::vector<std::any> _Vector;
+		FIELD()
 		int32_t _SInt32;
+		FIELD()
 		bool _Boolean;
+	public:
 	}; 
 	// @test end
 }

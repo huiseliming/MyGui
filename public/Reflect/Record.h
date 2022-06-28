@@ -14,6 +14,23 @@
 
 #include "MyGuiExport.h"
 
+
+#ifdef __RUN_CODE_GENERATOR__
+#define METADATA(...)  [[clang::annotate("meta" __VA_OPT__(", ") #__VA_ARGS__)]]// __attribute__((annotate("meta" __VA_OPT__(", ") #__VA_ARGS__)))
+#define CLASS(...)     METADATA(__VA_ARGS__)
+#define STRUCT(...)    METADATA(__VA_ARGS__)
+#define ENUM(...)      METADATA(__VA_ARGS__)
+#define FIELD(...)	   METADATA(__VA_ARGS__)
+#define FUNCTION(...)  METADATA(__VA_ARGS__)
+#else
+#define CLASS(...)
+#define ENUM(...)
+#define FIELD(...)
+#define FUNCTION(...)
+#define METADATA(...)
+#endif
+
+
 namespace Reflect
 {
 

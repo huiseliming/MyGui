@@ -203,7 +203,6 @@ int main(int ArgC, char* ArgV[])
                     case CXCursor_EnumConstantDecl:
                         return CXChildVisit_Continue;
                     default:
-                        std::cout << "'" << clang_getCursorSpelling(current_cursor) << "' of kind '" << clang_getCursorKindSpelling(clang_getCursorKind(current_cursor)) << "'\n";
                         return CXChildVisit_Continue;
                         break;
                     }

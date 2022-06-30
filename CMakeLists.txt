@@ -79,6 +79,11 @@ source_group(
   FILES ${PublicSource} ${PrivateSource} ${ImGuiSource}
 )
 
+source_group(
+  TREE ${CMAKE_CURRENT_SOURCE_DIR} 
+  PREFIX Generated 
+  FILES ${GeneratedFiles}
+)
 
 target_include_directories(MyGui PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/public>

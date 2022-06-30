@@ -50,33 +50,28 @@ set(ImGuiSource
     ${CMAKE_CURRENT_SOURCE_DIR}/third_party/imgui/imgui_tables.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/third_party/imgui/imgui_widgets.cpp)
 
-add_library(MyGui ${PublicSource} ${PrivateSource} ${ImGuiSource})
-
-find_program(
-    CODE_GENERATOR_EXECUTABLE
-    NAMES
-        MyCodeGenerator
-    DOC "MyCodeGenerator executable location"
-    PATHS ${CMAKE_CURRENT_SOURCE_DIR}/code_generator/
-)
-if(CODE_GENERATOR_EXECUTABLE)
-    message("CODE_GENERATOR_EXECUTABLE ${REFL_GENERATOR_EXECUTABLE}")
-else()
-    message(FATAL_ERROR "CODE_GENERATOR_EXECUTABLE ${REFL_GENERATOR_EXECUTABLE}")
-endif()
-
-set(ParsedFiles 
+    set(OriginalHeaders 
     ${CMAKE_CURRENT_SOURCE_DIR}/public/Reflect/Struct.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/public/Reflect/Class.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/public/Reflect/Enum.h
 )
 
-add_custom_target(MyGui-CodeGenerator
-    ALL
-    COMMAND ${CODE_GENERATOR_EXECUTABLE} ${CMAKE_BINARY_DIR} -MYGUI_API ${ParsedFiles}
-    DEPENDS ${ParsedFiles}
-    BYPRODUCTS ${GeneratedFiles}
-    COMMENT "working for refl generated ..."
+
+set(OriginalHeaders 
+    ${CMAKE_CURRENT_SOURCE_DIR}/public/Reflect/Class.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/public/Reflect/Enum.h
 )
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake/)
+include(my_code_generator)
+find_my_code_generator("${CMAKE_CURRENT_SOURCE_DIR}/code_generator/")
+run_my_code_generator(
+    MyGui-CodeGenerator         #TargetName
+    ${CMAKE_BINARY_DIR}         #CompilationDatabaseDir
+    ${CMAKE_CURRENT_BINARY_DIR} #GeneratedFileOutputDir
+    MYGUI_API                   #ExportApi
+    OriginalHeaders             #InputHeaders
+    GeneratedFiles              #OutputFiles
+)
+add_library(MyGui ${PublicSource} ${PrivateSource} ${ImGuiSource} ${GeneratedFiles})
 add_dependencies(MyGui MyGui-CodeGenerator)
 
 source_group(
@@ -111,6 +106,7 @@ target_link_libraries(MyGui PRIVATE minhook::minhook)
 add_custom_command(TARGET MyGui POST_BUILD
   COMMAND ${CMAKE_COMMAND} -E copy_directory
   ${CMAKE_CURRENT_SOURCE_DIR}/assets
+  $<TARGET_FILE_DIR:MyGui>
   ${CMAKE_BINARY_DIR}
 )
 

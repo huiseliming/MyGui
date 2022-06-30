@@ -1,7 +1,6 @@
 #pragma once
 #include "Type.h"
 
-
 namespace Reflect
 {
 
@@ -37,41 +36,48 @@ namespace Reflect
 		std::map<uint64_t, EnumValue> _EnumValueMap;
 
 	private:
-		template<typename T> friend struct TCustomReflectEnumModifier;
-		template<typename T> friend struct TDefaultReflectEnumInitializer;
+		template<typename T> friend struct TCustomEnumModifier;
+		template<typename T> friend struct TDefaultEnumInitializer;
 	};
 
 	template<typename T>
-	struct TCustomReflectEnumModifier {
+	struct TCustomEnumModifier {
 		void operator()(Enum* initialized_enum) {}
 	};
 	template<typename T>
-	struct TDefaultReflectEnumInitializer {
+	struct TDefaultEnumInitializer {
 		void operator()(Enum* uninitialized_enum) {}
 	};
 
 	template<typename T>
-	struct TReflectEnumAutoInitializer {
-		TReflectEnumAutoInitializer() {
+	struct TEnumAutoInitializer {
+		TEnumAutoInitializer() {
 			Enum* reflect_enum = GetStaticEnum<T>();
-			TDefaultReflectEnumInitializer<T>()(reflect_enum);
-			TCustomReflectEnumModifier<T>()(reflect_enum);
+			TDefaultEnumInitializer<T>()(reflect_enum);
+			TCustomEnumModifier<T>()(reflect_enum);
 		}
 	};
 
 	// @test begin
-	enum ETestEnum
+	enum ENUM() ETestEnum
 	{
-		TE_0,
-		TE_1,
-		TE_2,
-		TE_3,
-		TE_4,
-		TE_5,
-		TE_6,
+		TE_0 METADATA(DisplayName = test0),
+		TE_1 METADATA(DisplayName = "test1"),
+		TE_2 METADATA(DisplayName = "test2"),
+		TE_3 METADATA(DisplayName = 3),
+		TE_4 METADATA(DisplayName = 4.0),
+		TE_5 METADATA(DisplayName = TestFive),
+		TE_6 METADATA(DisplayName = "测试6"),
 	};
 
 	MYGUI_API template<> Enum* GetStaticEnum<ETestEnum>();
+
+	MYGUI_API
+	template<>
+	struct TCustomEnumModifier<ETestEnum> 
+	{
+		void operator()(Enum* initialized_enum);
+	};
 	// @test end
 };
 

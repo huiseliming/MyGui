@@ -78,7 +78,9 @@ namespace Reflect
 		//int64_t _Id{ 0 };
 		std::string _Name;
 		std::map<std::string, std::any> _AttributeMap;
-
+	private:
+		template<typename T> friend struct TCustomClassModifier;
+		template<typename T> friend struct TDefaultClassInitializer;
 	};
 
 }

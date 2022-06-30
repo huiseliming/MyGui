@@ -3,6 +3,9 @@
 
 namespace Reflect
 {
+    class Enum;
+    class Class;
+
     enum ECastTypeFlagBits : uint32_t
     {
         CTFB_NoFlag = 0ULL,
@@ -132,14 +135,21 @@ namespace Reflect
     MYGUI_API template<> Type* GetStaticType<std::unordered_map<int64_t, std::any>>();
     MYGUI_API template<> Type* GetStaticType<std::unordered_map<std::string, std::any>>();
 
-    class Enum;
     template<typename T> Enum* GetStaticEnum() { return nullptr; }
 
+    MYGUI_API std::unordered_map<std::string, Type*>& GetTypeNameMap();
+    MYGUI_API extern std::unordered_map<std::string, Type*>& GTypeNameMap;
+
+    MYGUI_API void AddTypeToNameMap(const std::string& type_name, Type* type_ptr);
+
+    MYGUI_API Enum* FindEnum(const std::string& enum_name);
+    MYGUI_API Class* FindClass(const std::string& class_name);
+
     MYGUI_API std::unordered_map<std::type_index, Type*>& GetTypeIndexMap();
+    MYGUI_API extern std::unordered_map<std::type_index, Type*>& GTypeIndexMap;
 
     MYGUI_API Type* GetType(const std::type_info& type_info);
 
-    class Class;
     template<typename T>
     struct IsReflectClassType
     {

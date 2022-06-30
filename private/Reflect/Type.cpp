@@ -1,4 +1,6 @@
 #include "Reflect/Type.h"
+#include "Reflect/Enum.h"
+#include "Reflect/Class.h"
 
 #define GET_STATIC_TYPE_FUNCTION_IMPL(BuiltinType, NameString)              \
 	template<> Type* GetStaticType<BuiltinType>()                           \
@@ -38,11 +40,51 @@ namespace Reflect
 	GET_STATIC_TYPE_FUNCTION_IMPL(Int64UnorderedMap , Int64UnorderedMap)
 	GET_STATIC_TYPE_FUNCTION_IMPL(StringUnorderedMap, StringUnorderedMap)
 
+	std::unordered_map<std::string, Type*>& GetTypeNameMap()
+	{
+		static std::unordered_map<std::string, Type*> static_type_name_map;
+		return static_type_name_map;
+	}
+	std::unordered_map<std::string, Type*>& GTypeNameMap = GetTypeNameMap();
+
+	void AddTypeToNameMap(const std::string& type_name, Type* type_ptr)
+	{
+		std::unordered_map<std::string, Type*>& type_name_map_ref = GetTypeNameMap();
+		assert(type_name_map_ref.insert(std::pair(type_name, type_ptr)).second);
+	}
+
+	Enum* FindEnum(const std::string& enum_name)
+	{
+		auto type_name_map_iterator = GTypeNameMap.find(enum_name);
+		if (type_name_map_iterator != GTypeNameMap.end())
+		{
+			if (type_name_map_iterator->second->GetCastTypeFlag() & CTFB_EnumBit)
+			{
+				return static_cast<Enum*>(type_name_map_iterator->second);
+			}
+		}
+		return nullptr;
+	}
+
+	Class* FindClass(const std::string& class_name)
+	{
+		auto type_name_map_iterator = GTypeNameMap.find(class_name);
+		if (type_name_map_iterator != GTypeNameMap.end())
+		{
+			if (type_name_map_iterator->second->GetCastTypeFlag() & CTFB_ClassBit)
+			{
+				return static_cast<Class*>(type_name_map_iterator->second);
+			}
+		}
+		return nullptr;
+	}
+
 	std::unordered_map<std::type_index, Type*>& GetTypeIndexMap()
 	{
 		static std::unordered_map<std::type_index, Type*> static_type_index_map;
 		return static_type_index_map;
 	}
+	std::unordered_map<std::type_index, Type*>& GTypeIndexMap = GetTypeIndexMap();
 
 	Type* GetType(const std::type_info& type_info)
 	{

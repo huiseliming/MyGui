@@ -24,6 +24,9 @@ target_include_directories(MyCodeGenerator PUBLIC ${LLVM_INCLUDE_DIRS})
 target_link_directories(MyCodeGenerator PUBLIC ${LLVM_LIBRARY_DIRS})
 target_link_libraries(MyCodeGenerator PUBLIC libclang)
 
+find_package(inja CONFIG REQUIRED)
+target_link_libraries(MyCodeGenerator PRIVATE pantor::inja)
+
 add_custom_command(TARGET MyCodeGenerator POST_BUILD
   COMMAND ${CMAKE_COMMAND} -E copy_if_different
   ${LLVM_BINARY_DIR}/bin/libclang.dll

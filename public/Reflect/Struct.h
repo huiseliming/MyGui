@@ -19,6 +19,24 @@ namespace Reflect
 	};
 
 	template<typename T>
+	struct TCustomClassModifier {
+		void operator()(Class* initialized_class) {}
+	};
+	template<typename T>
+	struct TDefaultClassInitializer {
+		void operator()(Class* uninitialized_class) {}
+	};
+
+	template<typename T>
+	struct TClassAutoInitializer {
+		TClassAutoInitializer() {
+			Class* reflect_class = T::StaticClass();
+			TDefaultClassInitializer<T>()(reflect_class);
+			TCustomClassModifier<T>()(reflect_class);
+		}
+	};
+
+	template<typename T>
 	struct ExistReflectInitializer
 	{
 	private:
@@ -29,23 +47,4 @@ namespace Reflect
 		static constexpr bool value = std::is_same<std::true_type, decltype(Test<T>(nullptr))>::value;
 	};
 
-	// @test begin
-	class CLASS(dsdsdsds, sdsdsds, eee) TestStruct
-	{
-	private:
-		template<typename T> friend struct TCustomReflectModifier;
-		template<typename T> friend struct TDefaultReflectInitializer;
-	public:
-		static Class* StaticClass();
-	public:
-
-		FIELD(aa, tt)
-		std::vector<std::any> _Vector;
-		FIELD()
-		int32_t _SInt32;
-		FIELD()
-		bool _Boolean;
-	public:
-	}; 
-	// @test end
 }

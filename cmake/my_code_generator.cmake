@@ -22,7 +22,7 @@ add_custom_target(${TargetName}
     COMMAND ${MY_CODE_GENERATOR_EXECUTABLE} ${CompilationDatabaseDir} ${GeneratedFileOutputDir} -${ExportApi} ${${InputHeaders}}
     DEPENDS ${${InputHeaders}}
     BYPRODUCTS ${${OutputFiles}}
-    COMMENT "working for refl generated ..."
+    COMMENT "MyCodeGenerator working ..."
 )
 endmacro()
 

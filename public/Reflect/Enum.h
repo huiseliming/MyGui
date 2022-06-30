@@ -64,14 +64,14 @@ namespace Reflect
 		TE_0 METADATA(DisplayName = test0),
 		TE_1 METADATA(DisplayName = "test1"),
 		TE_2 METADATA(DisplayName = "test2"),
-		TE_3 METADATA(DisplayName = 3),
+		TE_3 METADATA(DisplayName = 30),
 		TE_4 METADATA(DisplayName = 4.0),
 		TE_5 METADATA(DisplayName = TestFive),
 		TE_6 METADATA(DisplayName = "测试6"),
 	};
 
 	MYGUI_API template<> Enum* GetStaticEnum<ETestEnum>();
-
+	
 	MYGUI_API
 	template<>
 	struct TCustomEnumModifier<ETestEnum> 

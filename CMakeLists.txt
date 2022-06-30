@@ -35,7 +35,6 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 file(GLOB_RECURSE PublicSource public/*.h)
 file(GLOB_RECURSE PrivateSource private/*.h private/*.cpp)
 
-add_subdirectory(code_generator)
 add_subdirectory(third_party)
 
 set(ImGuiSource

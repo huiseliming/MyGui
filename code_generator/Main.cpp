@@ -74,12 +74,12 @@ int main(int ArgC, char* ArgV[])
             Headers.push_back(ArgV[i]);
         }
         std::cout << "CompilationDatabaseDir: " << ArgV[1] << std::endl;
-        std::cout << "ApiName: " << ApiName << std::endl;
-        std::cout << "GeneratedOuputDir: " << GeneratedOuputDir << std::endl;
+        std::cout << "ApiName               : " << ApiName << std::endl;
+        std::cout << "GeneratedOuputDir     : " << GeneratedOuputDir << std::endl;
         for (size_t i = 0; i < Headers.size(); i++)
         {
             TranslationUnitClientData translation_unit_client_data;
-            std::cout << "Header" << i << ": " << Headers[i] << std::endl;
+            //std::cout << "Header" << i << ": " << Headers[i] << std::endl;
             std::string original_header = Headers[i];
             std::size_t dot_pos = original_header.rfind(".");
             std::size_t last_separator_pos = original_header.find_last_of("\\/");
@@ -108,7 +108,7 @@ int main(int ArgC, char* ArgV[])
                     CXString compile_command_arg = clang_CompileCommand_getArg(compile_command, k);
                     std::string compile_command_arg_string = clang_getCString(compile_command_arg);
                     clang_disposeString(compile_command_arg);
-                    std::cout << compile_command_arg_string << std::endl;
+                    //std::cout << compile_command_arg_string << std::endl;
                     compile_command_args.push_back(compile_command_arg_string);
                 }
             }
@@ -214,8 +214,8 @@ int main(int ArgC, char* ArgV[])
             translation_unit_client_data._GeneratedSourceCode = "#include \"" + translation_unit_client_data._OriginalHeader + "\"\n";
             translation_unit_client_data._GeneratedHeaderCode = "#pragma once";
             CursorNodeLoop(translation_unit_client_data, &translation_unit_client_data._RootCursorNode);
-            std::cout << " --- GeneratedHeaderCode ---" << std::endl;
-            std::cout << translation_unit_client_data._GeneratedHeaderCode << std::endl;
+            //std::cout << " --- GeneratedHeaderCode ---" << std::endl;
+            //std::cout << translation_unit_client_data._GeneratedHeaderCode << std::endl;
             {
                 std::fstream OutputGeneratedFileStream;
                 OutputGeneratedFileStream.open(translation_unit_client_data._GeneratedHeaderFile, std::ios::out | std::ios::trunc);
@@ -228,8 +228,8 @@ int main(int ArgC, char* ArgV[])
                     std::filesystem::last_write_time(translation_unit_client_data._GeneratedHeaderFile, DotHLastWriteTime, ErrorCode);
                 }
             }
-            std::cout << " --- GeneratedSourceCode ---" << std::endl;
-            std::cout << translation_unit_client_data._GeneratedSourceCode << std::endl;
+            //std::cout << " --- GeneratedSourceCode ---" << std::endl;
+            //std::cout << translation_unit_client_data._GeneratedSourceCode << std::endl;
             {
                 std::fstream OutputGeneratedFileStream;
                 OutputGeneratedFileStream.open(translation_unit_client_data._GeneratedSourceFile, std::ios::out | std::ios::trunc);

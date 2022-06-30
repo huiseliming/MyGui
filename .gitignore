@@ -32,6 +32,10 @@
 *.app
 
 
+
+
+.cache/*
+code_generator/build/*
 .vs/*
 CMakeSettings.json
 build/*

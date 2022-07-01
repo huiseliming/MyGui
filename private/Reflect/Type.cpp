@@ -95,6 +95,38 @@ namespace Reflect
 		return nullptr;
 	}
 
+	std::vector<std::unique_ptr<PointerType>>& GetStaticPointerTypes()
+	{
+		static std::vector<std::unique_ptr<PointerType>> static_pointer_type_vector;
+		return static_pointer_type_vector;
+	}
+
+	std::unordered_map<std::type_index, PointerType*>& GetUninitializePointerTypeMap()
+	{
+		static std::unordered_map<std::type_index, PointerType*> static_uninitialize_pointer_type_map;
+		return static_uninitialize_pointer_type_map;
+	}
+
+	std::unordered_map<std::type_index, Type*>& GetPointerTypePointToTypeIndexMap()
+	{
+		static std::unordered_map<std::type_index, Type*> static_pointer_type_point_to_type_index_map;
+		return static_pointer_type_point_to_type_index_map;
+	}
+
+	bool VerifyStaticTypeInitializationResult()
+	{
+		auto& uninitialize_pointer_type_map_ref = GetUninitializePointerTypeMap();
+		if (!uninitialize_pointer_type_map_ref.empty())
+		{
+			for (auto& [key, value] : uninitialize_pointer_type_map_ref)
+			{
+				spdlog::error("uninitialize pointer type {:s}", key.name());
+			}
+			return false;
+		}
+		return true;
+	}
+
 	// 
 	static struct SimpleStaticTypeAutoInitializer
 	{

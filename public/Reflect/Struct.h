@@ -30,7 +30,7 @@ namespace Reflect
 	template<typename T>
 	struct TClassAutoInitializer {
 		TClassAutoInitializer() {
-			Class* reflect_class = T::StaticClass();
+			Class* reflect_class = static_cast<Class*>(GetType<T>());
 			TDefaultClassInitializer<T>()(reflect_class);
 			TCustomClassModifier<T>()(reflect_class);
 		}

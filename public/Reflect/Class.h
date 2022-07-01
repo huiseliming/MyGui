@@ -17,6 +17,8 @@ namespace Reflect
 	};
 
 	// @test begin
+	enum ETestEnum;
+
 	class CLASS(dsdsdsds, sdsdsds, eee) TestStruct
 	{
 	private:
@@ -32,6 +34,12 @@ namespace Reflect
 		int32_t _SInt32;
 		FIELD(abc = 123.0)
 		bool _Boolean;
+
+		FIELD(abc = 123.0)
+		bool* _BooleanPtr;
+
+		FIELD(abc = 123.0)
+		ETestEnum* _EnumPtr;
 	public:
 	};
 

@@ -1,5 +1,6 @@
 #pragma once
 #include "Record.h"
+#include <spdlog/spdlog.h>
 
 namespace Reflect
 {
@@ -36,6 +37,8 @@ namespace Reflect
         CTFB_UIntBits = CTFB_UInt8Bit | CTFB_UInt16Bit | CTFB_UInt32Bit | CTFB_UInt64Bit,
         CTFB_IntBits = CTFB_SIntBits | CTFB_UIntBits,
         CTFB_FloatBits = CTFB_FloatBit | CTFB_DoubleBit,
+
+        CTFB_PointerBit = 1ULL << 31,
     };
 
     template<typename T> struct TStaticBuiltinTypeFlag    { static constexpr ECastTypeFlagBits Value = ECastTypeFlagBits::CTFB_NoFlag; };
@@ -60,12 +63,14 @@ namespace Reflect
         uint32_t GetCastTypeFlag() const { return _CastTypeFlag; }
         uint32_t GetMemorySize() const { return _MemorySize; }
 
-        void* New()                        { return _New(); }
-        void  Delete(void* A)              { _Delete(A); }
-        void  Constructor(void* A)         { _Constructor(A); }
-        void  Destructor(void* A)          { _Destructor(A); }
-        void  CopyAssign(void* A, void* B) { _CopyAssign(A, B); }
-        void  MoveAssign(void* A, void* B) { _MoveAssign(A, B); }
+        void* New()                         { return _New(); }
+        void  Delete(void* A)               { _Delete(A); }
+        void  Constructor(void* A)          { _Constructor(A); }
+        void  Destructor(void* A)           { _Destructor(A); }
+        void  CopyAssign(void* A, void* B)  { _CopyAssign(A, B); }
+        void  MoveAssign(void* A, void* B)  { _MoveAssign(A, B); }
+
+        virtual Type* GetPointToType() const { return nullptr; }
 
 	protected:
 		uint32_t _CastTypeFlag;
@@ -88,29 +93,45 @@ namespace Reflect
         TType(const std::string& name = "") : Type(name)
         {
             _MemorySize = sizeof(CppType);
-            _New         = &TType<CppType>::Private_New;
-            _Delete      = &TType<CppType>::Private_Delete;
-            _Constructor = &TType<CppType>::Private_Constructor;
-            _Destructor  = &TType<CppType>::Private_Destructor;
-            _CopyAssign  = &TType<CppType>::Private_CopyAssign;
-            _MoveAssign  = &TType<CppType>::Private_MoveAssign;
+            _New         = []() -> void* { return new CppType(); };
+            _Delete      = [](void* A) { delete static_cast<CppType*>(A); };
+            _Constructor = [](void* A) { new (A) CppType(); };
+            _Destructor  = [](void* A) { ((const CppType*)(A))->~CppType(); };
+            _CopyAssign  = [](void* A, void* B) { *static_cast<CppType*>(A) = *static_cast<CppType*>(B); };
+            _MoveAssign  = [](void* A, void* B) { *static_cast<CppType*>(A) = std::move(*static_cast<CppType*>(B)); };
         }
-    private:
-        static void* Private_New        ()                 { return new CppType(); }
-        static void  Private_Delete     (void* A)          { delete static_cast<CppType*>(A); }
-        static void  Private_Constructor(void* A)          { new (A) CppType(); }
-        static void  Private_Destructor (void* A)          { ((const CppType*)(A))->~CppType(); }
-        static void  Private_CopyAssign (void* A, void* B) { *static_cast<CppType*>(A) = *static_cast<CppType*>(B); }
-        static void  Private_MoveAssign (void* A, void* B) { *static_cast<CppType*>(A) = std::move(*static_cast<CppType*>(B)); }
     };
 
     template<typename T>
     class TSimpleStaticType : public TType<T>
     {
     public:
-        TSimpleStaticType(const std::string& name)
+        TSimpleStaticType(const std::string& name = "")
             : TType<T>(name)
         {}
+    };
+
+    class PointerType : public Type
+    {
+        using CppType = void*;
+    public:
+        PointerType(const std::string& name = "")
+            : Type(name)
+        {
+            _MemorySize = sizeof(CppType);
+            _New         = []() -> void* { return new CppType(); };
+            _Delete      = [](void* A) { delete static_cast<CppType*>(A); };
+            _Constructor = [](void* A) { new (A) CppType(); };
+            _Destructor  = [](void* A) { ((const CppType*)(A))->~CppType(); };
+            _CopyAssign  = [](void* A, void* B) { *static_cast<CppType*>(A) = *static_cast<CppType*>(B); };
+            _MoveAssign  = [](void* A, void* B) { *static_cast<CppType*>(A) = std::move(*static_cast<CppType*>(B)); };
+        }
+
+        virtual Type* GetPointToType() const { return _PointToType; }
+    private:
+        Type* _PointToType{ nullptr };
+    private:
+        template<typename T> friend Type* GetType();
     };
 
     template<typename T> Type* GetStaticType() { return nullptr; }
@@ -135,6 +156,8 @@ namespace Reflect
     MYGUI_API template<> Type* GetStaticType<std::unordered_map<int64_t, std::any>>();
     MYGUI_API template<> Type* GetStaticType<std::unordered_map<std::string, std::any>>();
 
+
+
     template<typename T> Enum* GetStaticEnum() { return nullptr; }
 
     MYGUI_API std::unordered_map<std::string, Type*>& GetTypeNameMap();
@@ -149,6 +172,11 @@ namespace Reflect
     MYGUI_API extern std::unordered_map<std::type_index, Type*>& GTypeIndexMap;
 
     MYGUI_API Type* GetType(const std::type_info& type_info);
+
+    // 
+    MYGUI_API std::vector<std::unique_ptr<PointerType>>& GetStaticPointerTypes();
+    MYGUI_API std::unordered_map<std::type_index, PointerType*>& GetUninitializePointerTypeMap();
+    MYGUI_API std::unordered_map<std::type_index, Type*>& GetPointerTypePointToTypeIndexMap();
 
     template<typename T>
     struct IsReflectClassType
@@ -174,8 +202,27 @@ namespace Reflect
         std::type_index type_index = std::type_index(typeid(T));
         auto type_index_map_iterator = type_index_map_ref.find(type_index);
         if (type_index_map_ref.end() != type_index_map_iterator) return type_index_map_iterator->second;
+        auto& uninitialize_pointer_type_map_ref = GetUninitializePointerTypeMap();
+        auto& pointer_type_point_to_type_index_map_ref = GetPointerTypePointToTypeIndexMap();
         Type* return_type = nullptr;
-        if constexpr (std::is_arithmetic_v<T>)
+        if      constexpr (std::is_pointer_v<T>)
+        {
+            auto& static_pointer_types_ref = GetStaticPointerTypes();
+            static_pointer_types_ref.push_back(std::make_unique<PointerType>());
+            auto static_pointer_type_ptr = static_pointer_types_ref.back().get();
+            auto pointer_type_point_to_type_index_map_iterator = pointer_type_point_to_type_index_map_ref.find(type_index);
+            if (pointer_type_point_to_type_index_map_iterator != pointer_type_point_to_type_index_map_ref.end())
+            {
+                static_pointer_type_ptr->_PointToType = pointer_type_point_to_type_index_map_iterator->second;
+            }
+            else
+            {
+                uninitialize_pointer_type_map_ref.insert(std::make_pair(type_index, static_pointer_type_ptr));
+            }
+            return_type = static_pointer_type_ptr;
+            return_type->_CastTypeFlag = ECastTypeFlagBits::CTFB_PointerBit;
+        }
+        else if constexpr (std::is_arithmetic_v<T>)
         {
             return_type = GetStaticType<T>();
             return_type->_CastTypeFlag = TStaticBuiltinTypeFlag<T>::Value;
@@ -234,9 +281,20 @@ namespace Reflect
         {
             static_assert(ConstexprFalse<T> && "UNSUPPORTED TYPE");
         }
+        using AddPointerType = std::add_pointer_t<T>;
+        std::type_index add_pointer_type_index = typeid(AddPointerType);
+        pointer_type_point_to_type_index_map_ref.insert(std::make_pair(add_pointer_type_index, return_type));
+        auto uninitialize_pointer_type_map_iterator = uninitialize_pointer_type_map_ref.find(add_pointer_type_index);
+        if (uninitialize_pointer_type_map_iterator != uninitialize_pointer_type_map_ref.end())
+        {
+            uninitialize_pointer_type_map_iterator->second->_PointToType = return_type;
+            uninitialize_pointer_type_map_ref.erase(uninitialize_pointer_type_map_iterator);
+        }
         type_index_map_ref[type_index] = return_type;
         return return_type;
     }
+
+    MYGUI_API bool VerifyStaticTypeInitializationResult();
 
 }
 

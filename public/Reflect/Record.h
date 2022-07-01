@@ -11,6 +11,7 @@
 #include <type_traits>
 #include <typeinfo>
 #include <typeindex>
+#include <functional>
 
 #include "MyGuiExport.h"
 

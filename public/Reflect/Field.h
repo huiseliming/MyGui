@@ -3,6 +3,15 @@
 
 namespace Reflect
 {
+	enum EFieldFlagBits : uint32_t
+	{
+		FFB_NoFlag = 0ULL,
+		FFB_LValueRefBit = 1ULL << 1,
+		FFB_RValueRefBit = 1ULL << 2,
+		FFB_RValueRefBits = FFB_LValueRefBit | FFB_RValueRefBit,
+	};
+
+
 	class MYGUI_API Field : public Record
 	{
 	public:
@@ -273,36 +282,23 @@ namespace Reflect
 		}
 	};
 
-	//class VectorField : public Field
-	//{
-	//public:
-	//	VectorField(const std::string& name = "", uint32_t memory_offset = 0)
-	//		: Field(name, memory_offset, Reflect::GetType<std::vector<std::any>>())
-	//	{}
-	//};
-
-	//class StringMapField : public Field
-	//{
-	//public:
-	//	StringMapField(const std::string& name = "", uint32_t memory_offset = 0)
-	//		: Field(name, memory_offset, Reflect::GetType<std::map<std::string, std::any>>())
-	//	{}
-	//};
-
-	//class StringUnorderedMapField : public Field
-	//{
-	//public:
-	//	StringUnorderedMapField(const std::string& name = "", uint32_t memory_offset = 0)
-	//		: Field(name, memory_offset, Reflect::GetType<std::unordered_map<std::string, std::any>>())
-	//	{}
-	//};
+	template<typename T>
+	class MYGUI_API PointerField : public Field
+	{
+	public:
+		PointerField(const std::string& name = "", uint32_t memory_offset = 0, Type* type = nullptr)
+			: Field(name, memory_offset, Reflect::GetType<T>())
+		{}
+	};
 
 	template<typename T>
 	std::unique_ptr<Field> MakeField(const std::string& name, uint32_t memory_offset)
 	{
 		static_assert(!std::is_reference_v<T>);
 		Field* Field = nullptr;
-		if constexpr (std::is_same_v<bool, T>)
+		if constexpr (std::is_pointer_v<T>)
+			return std::make_unique<PointerField<T>>(name, memory_offset);
+		else if constexpr (std::is_same_v<bool, T>)
 			return std::make_unique<BoolField>(name, memory_offset);
 		else if constexpr (std::is_arithmetic_v<T>)
 			return std::make_unique<TNumericField<T>>(name, memory_offset);

@@ -52,7 +52,7 @@ namespace Reflect
 	template<typename T>
 	struct TEnumAutoInitializer {
 		TEnumAutoInitializer() {
-			Enum* reflect_enum = GetStaticEnum<T>();
+			Enum* reflect_enum = static_cast<Enum*>(GetType<T>());
 			TDefaultEnumInitializer<T>()(reflect_enum);
 			TCustomEnumModifier<T>()(reflect_enum);
 		}

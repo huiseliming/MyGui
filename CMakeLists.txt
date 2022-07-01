@@ -88,6 +88,7 @@ source_group(
 target_include_directories(MyGui PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/public>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/public>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
     $<INSTALL_INTERFACE:public>
 )
 target_include_directories(MyGui PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/third_party/imgui)
@@ -98,8 +99,8 @@ target_link_libraries(MyGui PUBLIC spdlog::spdlog spdlog::spdlog_header_only)
 find_package(glfw3 CONFIG REQUIRED)
 target_link_libraries(MyGui PUBLIC glfw)
 
-find_package(glm CONFIG REQUIRED)
-target_link_libraries(MyGui PUBLIC glm::glm)
+# find_package(glm CONFIG REQUIRED)
+# target_link_libraries(MyGui PUBLIC glm::glm)
 
 find_package(Vulkan REQUIRED)
 target_link_libraries(MyGui PUBLIC Vulkan::Vulkan)
@@ -107,12 +108,18 @@ target_link_libraries(MyGui PUBLIC Vulkan::Vulkan)
 find_package(minhook CONFIG REQUIRED)
 target_link_libraries(MyGui PRIVATE minhook::minhook)
 
-add_custom_command(TARGET MyGui POST_BUILD
-  COMMAND ${CMAKE_COMMAND} -E copy_directory
-  ${CMAKE_CURRENT_SOURCE_DIR}/assets
-  $<TARGET_FILE_DIR:MyGui>
-  ${CMAKE_BINARY_DIR}
-)
+find_package(minhook CONFIG REQUIRED)
+target_link_libraries(MyGui PRIVATE minhook::minhook)
+
+find_package(Poco CONFIG REQUIRED Util)
+target_link_libraries(MyGui PUBLIC Poco::Util)
+
+# add_custom_command(TARGET MyGui POST_BUILD
+#   COMMAND ${CMAKE_COMMAND} -E copy_directory
+#   ${CMAKE_CURRENT_SOURCE_DIR}/assets
+#   $<TARGET_FILE_DIR:MyGui>
+#   ${CMAKE_BINARY_DIR}
+# )
 
 include(GenerateExportHeader)
 generate_export_header(MyGui

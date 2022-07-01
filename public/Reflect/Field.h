@@ -98,7 +98,7 @@ namespace Reflect
 		{
 			return FieldAccessor::Get(Field::GetFieldDataPtr(field_owner_ptr));
 		}
-		virtual std::string GetBoolToString(void const* field_owner_ptr) const
+		virtual std::string GetBoolToString(void const* field_owner_ptr) const override
 		{
 			return GetBool(field_owner_ptr) ? "True" : "False";
 		}

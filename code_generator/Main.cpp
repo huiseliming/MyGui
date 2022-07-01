@@ -112,7 +112,16 @@ int main(int ArgC, char* ArgV[])
                     compile_command_args.push_back(compile_command_arg_string);
                 }
             }
-            compile_command_args.push_back("-D__RUN_CODE_GENERATOR__");
+            compile_command_args.insert(compile_command_args.end(), "-D__RUN_CODE_GENERATOR__");
+            //compile_command_args[0] = "clang++.exe";
+            //compile_command_args.insert(compile_command_args.begin() + 8, "-std=c++11");
+            //compile_command_args.insert(compile_command_args.begin() + 8, "-fms-compatibility-version=19.10");
+            //compile_command_args.insert(compile_command_args.begin() + 8, "c++-header");
+            //compile_command_args.insert(compile_command_args.begin() + 8, "-x");
+            //compile_command_args.insert(compile_command_args.end() - 1, "-fms-extensions");
+            //compile_command_args.insert(compile_command_args.end() - 1, "-fms-compatibility");
+            //compile_command_args.insert(compile_command_args.end() - 1, "-fdelayed-template-parsing");
+
             std::vector<const char*> command_line_args;
             for (size_t j = 0; j < compile_command_args.size(); j++)
             {
@@ -122,6 +131,11 @@ int main(int ArgC, char* ArgV[])
                     static std::unordered_set<std::string> UnrecognizedCompileFlagSet = {
                         "/TP",
                         "/TC",
+                        //"/FdTARGET_COMPILE_PDB",
+                        //"/FS",
+                        //"/Ob0",
+                        //"/Od",
+                        "/MP",
                     };
                     if (!UnrecognizedCompileFlagSet.contains(compile_command_args[j].c_str()))
                     {
@@ -135,11 +149,26 @@ int main(int ArgC, char* ArgV[])
                 nullptr,
                 command_line_args.data(), command_line_args.size(),
                 nullptr, 0,
-                CXTranslationUnit_None);
+                CXTranslationUnit_Incomplete |
+                CXTranslationUnit_KeepGoing);
             if (translation_unit == nullptr)
             {
                 std::cerr << "Unable to parse translation unit. Quitting." << std::endl;
                 exit(-1);
+            }
+            uint32_t diagnostics_num = clang_getNumDiagnostics(translation_unit);
+            for (size_t i = 0; i < diagnostics_num; i++)
+            {
+                CXDiagnostic diagnostic = clang_getDiagnostic(translation_unit, i);
+                unsigned options = 
+                    CXDiagnostic_DisplaySourceLocation |
+                    CXDiagnostic_DisplayColumn |
+                    CXDiagnostic_DisplayOption |
+                    CXDiagnostic_DisplaySourceRanges |
+                    CXDiagnostic_DisplayCategoryId |
+                    CXDiagnostic_DisplayCategoryName;
+                CXString formatted_diagnostic = clang_formatDiagnostic(diagnostic, options);
+                std::cout << ToString(formatted_diagnostic) << std::endl;
             }
             CXCursor translation_unit_cursor = clang_getTranslationUnitCursor(translation_unit);
             translation_unit_client_data._RootCursorNode._Cursor = translation_unit_cursor;
@@ -156,6 +185,7 @@ int main(int ArgC, char* ArgV[])
                     {
                         return CXChildVisit_Continue;
                     }
+                    std::cout << ToString(clang_getCursorKindSpelling(clang_getCursorKind(current_cursor))) << std::endl;
                     CXCursorKind current_cursor_kind = clang_getCursorKind(current_cursor);
                     struct VisitData
                     {
@@ -213,8 +243,8 @@ int main(int ArgC, char* ArgV[])
             translation_unit_client_data._GeneratedSourceCode = "#include \"" + translation_unit_client_data._OriginalHeader + "\"\n";
             translation_unit_client_data._GeneratedHeaderCode = "#pragma once";
             CursorNodeLoop(translation_unit_client_data, &translation_unit_client_data._RootCursorNode);
-            //std::cout << " --- GeneratedHeaderCode ---" << std::endl;
-            //std::cout << translation_unit_client_data._GeneratedHeaderCode << std::endl;
+            std::cout << " --- GeneratedHeaderCode ---" << std::endl;
+            std::cout << translation_unit_client_data._GeneratedHeaderCode << std::endl;
             {
                 std::fstream OutputGeneratedFileStream;
                 OutputGeneratedFileStream.open(translation_unit_client_data._GeneratedHeaderFile, std::ios::out | std::ios::trunc);
@@ -227,8 +257,8 @@ int main(int ArgC, char* ArgV[])
                     std::filesystem::last_write_time(translation_unit_client_data._GeneratedHeaderFile, DotHLastWriteTime, ErrorCode);
                 }
             }
-            //std::cout << " --- GeneratedSourceCode ---" << std::endl;
-            //std::cout << translation_unit_client_data._GeneratedSourceCode << std::endl;
+            std::cout << " --- GeneratedSourceCode ---" << std::endl;
+            std::cout << translation_unit_client_data._GeneratedSourceCode << std::endl;
             {
                 std::fstream OutputGeneratedFileStream;
                 OutputGeneratedFileStream.open(translation_unit_client_data._GeneratedSourceFile, std::ios::out | std::ios::trunc);

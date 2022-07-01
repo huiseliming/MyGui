@@ -3,6 +3,8 @@
 #include "CoreApplication.h"
 #include "GuiDrawObject.h"
 #include <spdlog/spdlog.h> 
+#include <Poco/Util/Application.h>
+#include <Poco/Util/HelpFormatter.h>
 
 #define IMGUI_API MYGUI_API
 #define IMGUI_IMPL_API IMGUI_API
@@ -18,35 +20,118 @@ static void FramebufferResizeCallback(GLFWwindow* window, int width, int height)
 
 MYGUI_API VkSurfaceFormatKHR ImGui_ImplVulkanH_SelectSurfaceFormat_HookFunction(VkPhysicalDevice physical_device, VkSurfaceKHR surface, const VkFormat* request_formats, int request_formats_count, VkColorSpaceKHR request_color_space);
 
-class MYGUI_API VulkanGuiApplication : public CoreApplication
+class MYGUI_API TaskQueueSubsystem : public Poco::Util::Subsystem
 {
+	using Super = Poco::Util::Subsystem;
 public:
-	virtual void Run(int32_t& ArgC, const char* ArgV[]) override {
+
+	uint32_t ProcessMainThreadTasks()
+	{
+		return _MainThreadTaskQueue->ProcessTask();
+	}
+
+	virtual const char* name() const override
+	{
+		return "TaskQueueSubsystem";
+	}
+
+protected:
+	virtual void initialize(Poco::Util::Application& app) override
+	{
+		_MainThreadTaskQueue = &CurrentThreadTaskQueueRef();
+	}
+
+	virtual void uninitialize() override
+	{
+		ProcessMainThreadTasks();
+		_MainThreadTaskQueue = nullptr;
+	}
+
+	template<typename Task, typename ... TaskArgs>
+	bool PostTaskToMainThread(Task&& task, TaskArgs&& ... args)
+	{
+		if (_MainThreadTaskQueue)
+		{
+			_MainThreadTaskQueue->EnqueueTask(std::bind(std::forward<Task>(task), std::forward<TaskArgs>(task)...));
+			return true;
+		}
+		else
+		{
+			spdlog::error("TaskQueueSubsystem::_MainThreadTaskQueue IS NULLPTR");
+		}
+		return false;
+	}
+
+	ThreadTaskQueue* _MainThreadTaskQueue{ nullptr };
+};
+
+
+
+class MYGUI_API VulkanGuiApplication : public Poco::Util::Application
+{
+	using Super = Poco::Util::Application;
+public:
+	VulkanGuiApplication();
+protected:
+	virtual void initialize(Poco::Util::Application& self) override;
+	virtual void reinitialize(Poco::Util::Application& self) override;
+	virtual void uninitialize() override;
+	virtual void defineOptions(Poco::Util::OptionSet& options) override;
+	virtual void handleOption(const std::string& name, const std::string& value) override;
+
+	void HandleHelp(const std::string& name, const std::string& value) {
+		_SkipMain = true;
+		Poco::Util::HelpFormatter helpFormatter(options());
+		helpFormatter.setCommand(commandName());
+		helpFormatter.setUsage("OPTIONS");
+		helpFormatter.setHeader("A sample application that demonstrates some of the features of the Poco::Util::Application class.");
+		helpFormatter.format(std::cout);
+		stopOptionsProcessing();
+	}
+
+	virtual int main(const std::vector<std::string>& args) override
+	{
+		int exit_code = EXIT_SUCCESS;
 		try
 		{
-			if (Startup(ArgC, ArgV))
+			std::vector<const char*> startup_args;
+			for (size_t i = 0; i < args.size(); i++)
+			{
+				startup_args.push_back(args[i].c_str());
+			}
+			if (Startup(startup_args.size(), startup_args.data()))
 			{
 				while (!IsRequestExit()) {
 					MainLoop();
 				}
 			}
 		}
+		catch (const Poco::Exception& PocoException)
+		{
+			exit_code = EXIT_FAILURE;
+			spdlog::error("[std::exception] <what:{:s}>", PocoException.message());
+		}
 		catch (const std::exception& StdException)
 		{
+			exit_code = EXIT_FAILURE;
 			spdlog::error("[std::exception] <what:{:s}>", StdException.what());
 		}
 		Cleanup();
+		return exit_code;
 	}
 
 	GLFWwindow* GLFWwindowPtr() { return _GLFWwindow; }
 
+private:
+	bool _SkipMain = false;
+	Poco::AutoPtr<TaskQueueSubsystem> _TaskQueueSubsystem;
 protected:
 
-	virtual bool Startup(int32_t& ArgC, const char* ArgV[]) override;
-	virtual void MainLoop() override;
-	virtual void Cleanup() override;
-	virtual bool IsRequestExit() override;
-	virtual void SetRequestExit() override;
+	bool Startup(int32_t ArgC, const char* ArgV[]);
+	void MainLoop();
+	void Cleanup();
+	bool IsRequestExit();
+	void SetRequestExit();
 
 	uint32_t _Width = 1280;
 	uint32_t _Height = 720;
@@ -74,7 +159,7 @@ protected:
 	// Draw logic
 	void ImGui_Draw();
 public:
-	std::vector<std::shared_ptr<GuiDrawObject>> Drawables;
+	std::vector<std::shared_ptr<GuiDrawObject>> _Drawables;
 private:
 	// Tools
 	bool CheckValidationLayerSupport();

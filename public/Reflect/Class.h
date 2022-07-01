@@ -11,7 +11,6 @@ namespace Reflect
 			: Struct(name)
 		{}
 
-
 	private:
 		template<typename T> friend struct TCustomClassModifier;
 		template<typename T> friend struct TDefaultClassInitializer;

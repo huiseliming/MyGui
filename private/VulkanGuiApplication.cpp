@@ -1,6 +1,8 @@
 #include "VulkanGuiApplication.h"
 #include "../third_party/imgui/backends/imgui_impl_vulkan.h"
 #include "../third_party/imgui/backends/imgui_impl_glfw.h"
+#include <Poco/File.h>
+
 #ifdef _WIN32
 #include <MinHook.h>
 #endif // _WIN32
@@ -21,6 +23,11 @@ static void HookImGuiFunction(VulkanGuiApplication* vulkan_gui_application)
 #endif // _WIN32
 }
 
+VulkanGuiApplication::VulkanGuiApplication()
+{
+	addSubsystem(_TaskQueueSubsystem = new TaskQueueSubsystem());
+}
+
 static void UnhookImGuiFunction()
 {
 #ifdef _WIN32
@@ -28,11 +35,43 @@ static void UnhookImGuiFunction()
 #endif // _WIN32
 }
 
-bool VulkanGuiApplication::Startup(int32_t& ArgC, const char* ArgV[]) {
-	CoreApplication::Startup(ArgC, ArgV);
+void VulkanGuiApplication::initialize(Poco::Util::Application& self)
+{
 	MH_Initialize();
 	HookImGuiFunction(this);
 	glfwInit();
+	Super::initialize(self);
+}
+
+void VulkanGuiApplication::reinitialize(Poco::Util::Application& self)
+{
+	Super::reinitialize(self);
+}
+
+void VulkanGuiApplication::uninitialize()
+{
+	Super::uninitialize();
+	glfwTerminate();
+	UnhookImGuiFunction();
+	MH_Uninitialize();
+}
+
+void VulkanGuiApplication::defineOptions(Poco::Util::OptionSet& options)
+{
+	Super::defineOptions(options);
+	options.addOption(
+		Poco::Util::Option("help", "h", "display help information on command line arguments")
+		.required(false)
+		.repeatable(false)
+		.callback(Poco::Util::OptionCallback<VulkanGuiApplication>(this, &VulkanGuiApplication::HandleHelp)));
+}
+
+void VulkanGuiApplication::handleOption(const std::string& name, const std::string& value)
+{
+	Super::handleOption(name, value);
+}
+
+bool VulkanGuiApplication::Startup(int32_t ArgC, const char* ArgV[]) {
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 	_GLFWwindow = glfwCreateWindow(_Width, _Height, "Vulkan", nullptr, nullptr);
 	glfwSetWindowUserPointer(_GLFWwindow, this);
@@ -58,7 +97,7 @@ void VulkanGuiApplication::MainLoop() {
 		ImGui_RenderFrame();
 		DrawFrame();
 	}
-	CoreApplication::MainLoop();
+	_TaskQueueSubsystem->ProcessMainThreadTasks();
 }
 
 void VulkanGuiApplication::Cleanup() {
@@ -84,10 +123,6 @@ void VulkanGuiApplication::Cleanup() {
 		_Instance.destroy();
 	}
 	glfwDestroyWindow(_GLFWwindow);
-	glfwTerminate();
-	UnhookImGuiFunction();
-	MH_Uninitialize();
-	CoreApplication::Cleanup();
 }
 
 bool VulkanGuiApplication::IsRequestExit()
@@ -234,8 +269,14 @@ void VulkanGuiApplication::ImGui_Startup()
 
 	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 	io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
-	io.Fonts->AddFontFromFileTTF("fonts/msyh.ttf", 15, NULL, io.Fonts->GetGlyphRangesChineseSimplifiedCommon());
-	
+#if _WIN32
+	std::string system_msyh_font_path = "C:\\Windows\\Fonts\\msyh.ttc";
+	if (Poco::File(system_msyh_font_path).exists())
+	{
+		io.Fonts->AddFontFromFileTTF(system_msyh_font_path.c_str(), 15, NULL, io.Fonts->GetGlyphRangesChineseSimplifiedCommon());
+	}
+#endif
+
 	ImGui::StyleColorsDark();
 	ImGui_CreateDescriptorPool();
 	ImGui_CreateRenderPass();
@@ -294,7 +335,7 @@ void VulkanGuiApplication::ImGui_Cleanup()
 
 void VulkanGuiApplication::ImGui_Draw()
 {
-	for (auto& Drawable : Drawables)
+	for (auto& Drawable : _Drawables)
 	{
 		Drawable->Draw();
 	}

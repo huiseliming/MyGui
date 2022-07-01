@@ -212,7 +212,7 @@ int main(int ArgC, char* ArgV[])
                         },
                         & visit_data);
                     CursorNode* current_cursor_node = nullptr;
-                    if(current_cursor_kind != CXCursor_EnumConstantDecl && current_cursor_kind != CXCursor_Namespace && !visit_data._HasMetaAttribute)
+                    if(current_cursor_kind != CXCursor_CXXBaseSpecifier && current_cursor_kind != CXCursor_EnumConstantDecl && current_cursor_kind != CXCursor_Namespace && !visit_data._HasMetaAttribute)
                     {
                         return CXChildVisit_Continue;
                     }
@@ -232,6 +232,9 @@ int main(int ArgC, char* ArgV[])
                         return CXChildVisit_Recurse;
                     case CXCursor_EnumConstantDecl:
                         return CXChildVisit_Continue;
+                    case CXCursor_CXXBaseSpecifier:
+                        translation_unit_client_data_ptr->_ParentCursorNode = current_cursor_node;
+                        return CXChildVisit_Recurse;
                     default:
                         return CXChildVisit_Continue;
                         break;
@@ -244,7 +247,7 @@ int main(int ArgC, char* ArgV[])
             translation_unit_client_data._GeneratedHeaderCode = "#pragma once";
             CursorNodeLoop(translation_unit_client_data, &translation_unit_client_data._RootCursorNode);
             std::cout << " --- GeneratedHeaderCode ---" << std::endl;
-            std::cout << translation_unit_client_data._GeneratedHeaderCode << std::endl;
+            //std::cout << translation_unit_client_data._GeneratedHeaderCode << std::endl;
             {
                 std::fstream OutputGeneratedFileStream;
                 OutputGeneratedFileStream.open(translation_unit_client_data._GeneratedHeaderFile, std::ios::out | std::ios::trunc);
@@ -258,7 +261,7 @@ int main(int ArgC, char* ArgV[])
                 }
             }
             std::cout << " --- GeneratedSourceCode ---" << std::endl;
-            std::cout << translation_unit_client_data._GeneratedSourceCode << std::endl;
+            //std::cout << translation_unit_client_data._GeneratedSourceCode << std::endl;
             {
                 std::fstream OutputGeneratedFileStream;
                 OutputGeneratedFileStream.open(translation_unit_client_data._GeneratedSourceFile, std::ios::out | std::ios::trunc);
@@ -352,6 +355,7 @@ Class* {{name}}::StaticClass()
 }
 static TClassAutoInitializer<{{name}}> S{{name}}AutoInitializer;
 })";
+            
             children_cursor_node->_Data["namespace"] = GetNamespaceName(cursor_node);
             translation_unit_client_data_ref._GeneratedSourceCode += inja::render(class_source_template, children_cursor_node->_Data);
             break;
@@ -427,6 +431,9 @@ static TEnumAutoInitializer<{{name}}> S{{name}}AutoInitializer;
             cursor_node->_Data["children"].push_back(children_cursor_node->_Data);
             break;
         }
+        case CXCursor_CXXBaseSpecifier:
+            std::cout << "'" << clang_getCursorSpelling(children_cursor) << "' of kind '" << clang_getCursorKindSpelling(clang_getCursorKind(children_cursor)) << "'\n";
+            break;
         default:
             CursorNodeLoop(translation_unit_client_data_ref, children_cursor_node);
             break;

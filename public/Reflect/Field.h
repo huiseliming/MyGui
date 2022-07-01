@@ -11,7 +11,6 @@ namespace Reflect
 		FFB_RValueRefBits = FFB_LValueRefBit | FFB_RValueRefBit,
 	};
 
-
 	class MYGUI_API Field : public Record
 	{
 	public:

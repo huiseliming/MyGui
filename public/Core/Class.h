@@ -1,5 +1,6 @@
 #pragma once
 #include "Struct.h"
+#include "Function.h"
 
 namespace Core
 {
@@ -14,12 +15,32 @@ namespace Core
 		const std::vector<Class*>& GetParentClasses() { return _ParentClasses; }
 		const Class* GetFirstParentClass() { return _ParentClasses.empty() ? nullptr : _ParentClasses[0]; }
 
+		const std::vector<std::unique_ptr<Function>>& GetFunctions() { return _Functions; }
+
 	protected:
 		std::vector<Class*> _ParentClasses;
+		std::vector<std::unique_ptr<Function>> _Functions;
 
 	private:
 		template<typename T> friend struct TCustomTypeModifier;
 		template<typename T> friend struct TDefaultTypeInitializer;
+	};
+
+	template<typename CppType>
+	class TClass : public Class
+	{
+	public:
+		TClass(const std::string& name = "")
+			: Class(name)
+		{
+			//_MemorySize = sizeof(CppType);
+			//_New = []() -> void* { return new CppType(); };
+			//_Delete = [](void* A) { delete static_cast<CppType*>(A); };
+			//_Constructor = [](void* A) { new (A) CppType(); };
+			//_Destructor = [](void* A) { ((const CppType*)(A))->~CppType(); };
+			//_CopyAssign = [](void* A, void* B) { *static_cast<CppType*>(A) = *static_cast<CppType*>(B); };
+			//_MoveAssign = [](void* A, void* B) { *static_cast<CppType*>(A) = std::move(*static_cast<CppType*>(B)); };
+		}
 	};
 
 	// @test begin
@@ -61,7 +82,6 @@ namespace Core
 	public:
 		static Class* StaticClass();
 	public:
-
 		FIELD(abc = "123")
 		std::vector<std::any> _Vector; 
 		FIELD(abc = a123)
@@ -73,6 +93,10 @@ namespace Core
 		FIELD(abc = 123.0)
 		ETestEnum* _EnumPtr;
 	public:
+		
+		FUNCTION()
+		int TestAdd(int a, int b) { return a + b; }
+
 	};
 
 	MYGUI_API 

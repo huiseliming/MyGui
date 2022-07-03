@@ -41,6 +41,23 @@ namespace Core
 		template<typename T> friend struct TDefaultTypeInitializer;
 	};
 
+	template<typename CppType>
+	class TEnum : public Enum
+	{
+	public:
+		TEnum(const std::string& name = "")
+			: Enum(name)
+		{
+			_MemorySize = sizeof(CppType);
+			_New = []() -> void* { return new CppType(); };
+			_Delete = [](void* A) { delete static_cast<CppType*>(A); };
+			_Constructor = [](void* A) { new (A) CppType(); };
+			_Destructor = [](void* A) { ((const CppType*)(A))->~CppType(); };
+			_CopyAssign = [](void* A, void* B) { *static_cast<CppType*>(A) = *static_cast<CppType*>(B); };
+			_MoveAssign = [](void* A, void* B) { *static_cast<CppType*>(A) = std::move(*static_cast<CppType*>(B)); };
+		}
+	};
+
 	// @test begin
 	enum ENUM() ETestEnum
 	{

@@ -256,7 +256,7 @@ int main(int ArgC, char* ArgV[])
                     {
                         translation_unit_client_data_ptr->_CursorNodeStack.pop();
                     }
-                    //std::cout << ToString(clang_getCursorKindSpelling(clang_getCursorKind(current_cursor))) << std::endl;
+                    std::cout << ToString(clang_getCursorKindSpelling(clang_getCursorKind(current_cursor))) << std::endl;
                     CXCursorKind current_cursor_kind = clang_getCursorKind(current_cursor);
                     struct VisitData
                     {
@@ -318,6 +318,23 @@ int main(int ArgC, char* ArgV[])
                         {
                             current_cursor_node = CreateCursorNode(translation_unit_client_data_ptr, current_cursor, visit_data._MetaAttributeString);
                         }
+                        return CXChildVisit_Continue;
+                    case CXCursor_FunctionDecl:
+                        if (visit_data._HasMetaAttribute)
+                        {
+                            current_cursor_node = CreateCursorNode(translation_unit_client_data_ptr, current_cursor, visit_data._MetaAttributeString);
+                        }
+                        return CXChildVisit_Continue;
+                    case CXCursor_CXXMethod:
+                        if (visit_data._HasMetaAttribute)
+                        {
+                            current_cursor_node = CreateCursorNode(translation_unit_client_data_ptr, current_cursor, visit_data._MetaAttributeString);
+                            translation_unit_client_data_ptr->_CursorNodeStack.push(current_cursor_node);
+                            return CXChildVisit_Recurse;
+                        }
+                        return CXChildVisit_Continue;
+                    case CXCursor_ParmDecl:
+                        current_cursor_node = CreateCursorNode(translation_unit_client_data_ptr, current_cursor, visit_data._MetaAttributeString);
                         return CXChildVisit_Continue;
                     default:
                         return CXChildVisit_Continue;
@@ -414,6 +431,7 @@ void CursorNodeLoop(TranslationUnitClientData& translation_unit_client_data_ref,
         {
             children_cursor_node->_Data["parent_classes"] = nlohmann::json::array();
             children_cursor_node->_Data["fields"] = nlohmann::json::array();
+            children_cursor_node->_Data["functions"] = nlohmann::json::array();
             CursorNodeLoop(translation_unit_client_data_ref, children_cursor_node);
 
             std::string class_source_template =R"(
@@ -436,11 +454,35 @@ struct TDefaultTypeInitializer<{{name}}>
         uninitialized_class->_Fields.push_back(MakeField<{{field.cpp_type}}>("{{field.name}}", offsetof({{name}}, {{field.name}})));{% for key, value in field.attributes %}
         uninitialized_class->_Fields.back()->_AttributeMap.insert(std::make_pair("{{key}}", std::any({{value}})));{% endfor %}
 ## endfor
+
+## for function in functions
+        {
+            struct VMCallObject
+            {
+## for parm in function.parms
+                {{parm.cpp_type}} {{parm.name}};
+## endfor
+                int __return;
+            };
+            uninitialized_class->_Functions.push_back(std::make_unique<Function>("{{function.name}}"));
+            Function* this_funtion = uninitialized_class->_Functions.back().get();
+## for parm in function.parms
+            this_funtion->_Fields.push_back(MakeField<{{parm.cpp_type}}>("{{parm.name}}", offsetof(VMCallObject, {{parm.name}})));
+## endfor
+            this_funtion->_Fields.push_back(MakeField<int>("__return", offsetof(VMCallObject, __return)));
+            //this_funtion->_NativeCall = (void*) &TestStruct::TestAdd;
+            this_funtion->_VMCall =  [](void* in_object, void* in_vm_call_object) {
+                TestStruct* object = (TestStruct*)in_object;
+                VMCallObject* vm_call_object = (VMCallObject*)in_vm_call_object;
+                vm_call_object->__return = object->TestAdd({% for parm in function.parms %}vm_call_object->{{parm.name}}{% if not loop.is_last %}, {% endif %}{% endfor %});
+            };
+        }
+## endfor
     }
 };
 Class* {{name}}::StaticClass()
 {
-    static Class static_class("{{namespace}}::{{name}}");
+    static TClass<{{name}}> static_class("{{namespace}}::{{name}}");
     return &static_class;
 }
 static TTypeAutoInitializer<{{name}}> S{{name}}AutoInitializer;
@@ -455,6 +497,20 @@ static TTypeAutoInitializer<{{name}}> S{{name}}AutoInitializer;
             CXType type = clang_getCursorType(children_cursor);
             children_cursor_node->_Data["cpp_type"] = ToString(clang_getTypeSpelling(type));
             cursor_node->_Data["fields"].push_back(children_cursor_node->_Data);
+            break;
+        }
+        case CXCursor_CXXMethod:
+        {
+            children_cursor_node->_Data["parms"] = nlohmann::json::array();
+
+            for (size_t i = 0; i < children_cursor_node->_ChildrenCursorNode.size(); i++)
+            {
+                children_cursor_node->_Data["parms"].push_back(nlohmann::json::object());
+                CursorNode* parm_cursor_node = children_cursor_node->_ChildrenCursorNode[i].get();
+                children_cursor_node->_Data["parms"][i]["name"] = ToString(clang_getCursorSpelling(parm_cursor_node->_Cursor));
+                children_cursor_node->_Data["parms"][i]["cpp_type"] = ToString(clang_getTypeSpelling(clang_getCursorType(parm_cursor_node->_Cursor)));
+            }
+            cursor_node->_Data["functions"].push_back(children_cursor_node->_Data);
             break;
         }
         case CXCursor_EnumDecl:
@@ -485,7 +541,7 @@ struct TDefaultTypeInitializer<{{name}}>
 template<>
 Enum* GetStaticEnum<{{name}}>()
 {
-	static Enum static_enum("{{namespace}}::{{name}}");
+	static TEnum<{{name}}> static_enum("{{namespace}}::{{name}}");
 	return &static_enum;
 }
 static TTypeAutoInitializer<{{name}}> S{{name}}AutoInitializer;

@@ -49,15 +49,14 @@ set(ImGuiSource
     ${CMAKE_CURRENT_SOURCE_DIR}/third_party/imgui/imgui_tables.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/third_party/imgui/imgui_widgets.cpp)
 
-    set(OriginalHeaders 
-    ${CMAKE_CURRENT_SOURCE_DIR}/public/Reflect/Struct.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/public/Reflect/Enum.h
-)
-
-
-set(OriginalHeaders 
-    ${CMAKE_CURRENT_SOURCE_DIR}/public/Reflect/Class.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/public/Reflect/Enum.h
+set(OriginalHeaders
+    ${CMAKE_CURRENT_SOURCE_DIR}/public/Core/Class.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/public/Core/Enum.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/public/Core/Field.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/public/Core/Record.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/public/Core/Struct.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/public/Core/Type.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/public/Core/Object.h
 )
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake/)
 include(my_code_generator)

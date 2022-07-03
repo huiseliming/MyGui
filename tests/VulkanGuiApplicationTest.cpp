@@ -1,7 +1,7 @@
 #pragma once
 #include "VulkanGuiApplication.h"
-#include "Reflect/Class.h"
-#include "Reflect/Enum.h"
+#include "Core/Class.h"
+#include "Core/Enum.h"
 
 
 class MyApplication : public VulkanGuiApplication
@@ -18,34 +18,34 @@ public:
                 static bool show_another_window = false;
 
                 ImGui::Begin("TestStruct");
-                static Reflect::TestStruct test_struct;
-                Reflect::Class* reflect_class = Reflect::TestStruct::StaticClass();
+                static Core::TestStruct test_struct;
+                Core::Class* reflect_class = Core::TestStruct::StaticClass();
                 auto& reflect_class_fields = reflect_class->GetFields();
                 for (size_t i = 0; i < reflect_class_fields.size(); i++)
                 {
-                    Reflect::Field* field = reflect_class_fields[i].get();
+                    Core::Field* field = reflect_class_fields[i].get();
                     std::string label_name = "TestStruct::" + field->GetName();
 
-                    if (field->GetCastTypeFlag() & Reflect::ECastTypeFlagBits::CTFB_BoolBit)
+                    if (field->GetCastTypeFlag() & Core::ECastTypeFlagBits::CTFB_BoolBit)
                     {
                         if (ImGui::Checkbox(label_name.c_str(), field->GetFieldDataPtrAs<bool>(&test_struct)))
                         {
                             spdlog::info("ImGui::Checkbox");
                         }
                     }
-                    else if (field->GetCastTypeFlag() & Reflect::ECastTypeFlagBits::CTFB_SInt32Bit)
+                    else if (field->GetCastTypeFlag() & Core::ECastTypeFlagBits::CTFB_SInt32Bit)
                     {
                         if (ImGui::InputInt(label_name.c_str(), field->GetFieldDataPtrAs<int>(&test_struct)))
                         {
                             spdlog::info("ImGui::InputInt");
                         }
                     }
-                    else if (field->GetCastTypeFlag() & Reflect::ECastTypeFlagBits::CTFB_VectorBit)
+                    else if (field->GetCastTypeFlag() & Core::ECastTypeFlagBits::CTFB_VectorBit)
                     {
                         auto& vector = *field->GetFieldDataPtrAs<std::vector<std::any>>(&test_struct);
                         for (size_t i = 0; i < vector.size(); i++)
                         {
-                            if (Reflect::Type* type = Reflect::GetType(vector[i].type()))
+                            if (Core::Type* type = Core::GetType(vector[i].type()))
                             {
                                 ImGui::Text(type->GetName().c_str());
                             }
@@ -61,10 +61,10 @@ public:
                         }
                     }
                 }
-                static Reflect::ETestEnum test_enum;
-                Reflect::Enum* reflect_enum = Reflect::GetStaticEnum<Reflect::ETestEnum>();
+                static Core::ETestEnum test_enum;
+                Core::Enum* reflect_enum = Core::GetStaticEnum<Core::ETestEnum>();
                 auto& enum_value_map = reflect_enum->GetEnumValueMap();
-                std::vector<const Reflect::EnumValue*> enum_value_vector;
+                std::vector<const Core::EnumValue*> enum_value_vector;
                 for (auto enum_value_map_iterator = enum_value_map.begin(); enum_value_map_iterator != enum_value_map.end(); enum_value_map_iterator++)
                 {
                     enum_value_vector.push_back(&(enum_value_map_iterator->second));
@@ -72,7 +72,7 @@ public:
                 static int item_current_idx = 0; // Here we store our selection data as an index.
                 struct Funcs {
                     static bool ItemGetter(void* data, int n, const char** out_str) {
-                        const Reflect::EnumValue** enum_values = (const Reflect::EnumValue**)data;
+                        const Core::EnumValue** enum_values = (const Core::EnumValue**)data;
                         *out_str = enum_values[n]->_CppName.c_str();
                         return true;
                     }

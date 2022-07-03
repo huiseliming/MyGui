@@ -1,6 +1,6 @@
 #pragma once
 #include "MyGuiForward.h"
-#include "spdlog/spdlog.h"
+#include <spdlog/spdlog.h>
 
 class MYGUI_API CoreApplication
 {

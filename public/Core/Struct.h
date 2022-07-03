@@ -2,12 +2,13 @@
 #include "Type.h"
 #include "Field.h"
 
-namespace Reflect
+namespace Core
 {
 	class Class;
 
-	class MYGUI_API Struct : public Type
+	class MYGUI_API CLASS() Struct : public Type
 	{
+		GENERATED_OBJECT_BODY()
 	public:
 		Struct(const std::string& name = "") : Type(name) {}
 
@@ -16,24 +17,6 @@ namespace Reflect
 	protected:
 		std::vector<std::unique_ptr<Field>> _Fields;
 
-	};
-
-	template<typename T>
-	struct TCustomClassModifier {
-		void operator()(Class* initialized_class) {}
-	};
-	template<typename T>
-	struct TDefaultClassInitializer {
-		void operator()(Class* uninitialized_class) {}
-	};
-
-	template<typename T>
-	struct TClassAutoInitializer {
-		TClassAutoInitializer() {
-			Class* reflect_class = static_cast<Class*>(GetType<T>());
-			TDefaultClassInitializer<T>()(reflect_class);
-			TCustomClassModifier<T>()(reflect_class);
-		}
 	};
 
 	template<typename T>

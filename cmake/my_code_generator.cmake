@@ -16,7 +16,7 @@ macro(run_my_code_generator TargetName CompilationDatabaseDir GeneratedFileOutpu
     # message(${OutputFiles})
     set(${OutputFiles} ${GeneratedHeaderFiles} ${GeneratedSourceFiles})
     # message(${OutputFiles})
-    #message("${MY_CODE_GENERATOR_EXECUTABLE} ${CompilationDatabaseDir} ${GeneratedFileOutputDir} -${ExportApi} ${${InputHeaders}}")
+    message("${MY_CODE_GENERATOR_EXECUTABLE} ${CompilationDatabaseDir} ${GeneratedFileOutputDir} -${ExportApi} ${${InputHeaders}}")
     add_custom_target(${TargetName}
         ALL
         COMMAND ${MY_CODE_GENERATOR_EXECUTABLE} ${CompilationDatabaseDir} ${GeneratedFileOutputDir} -${ExportApi} ${${InputHeaders}}

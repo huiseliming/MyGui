@@ -12,31 +12,17 @@
 #include <typeinfo>
 #include <typeindex>
 #include <functional>
-
 #include "MyGuiExport.h"
+#include "Object.h"
 
-
-#ifdef __RUN_CODE_GENERATOR__
-#define METADATA(...)  [[clang::annotate("meta" __VA_OPT__(", ") #__VA_ARGS__)]]// __attribute__((annotate("meta" __VA_OPT__(", ") #__VA_ARGS__)))
-#define CLASS(...)     METADATA(__VA_ARGS__)
-#define STRUCT(...)    METADATA(__VA_ARGS__)
-#define ENUM(...)      METADATA(__VA_ARGS__)
-#define FIELD(...)	   METADATA(__VA_ARGS__)
-#define FUNCTION(...)  METADATA(__VA_ARGS__)
-#else
-#define CLASS(...)
-#define ENUM(...)
-#define FIELD(...)
-#define FUNCTION(...)
-#define METADATA(...)
-#endif
-
-
-namespace Reflect
+namespace Core
 {
+	class Enum;
+	class Class;
 
-	class MYGUI_API Record
+	class MYGUI_API CLASS() Record : public Object
 	{
+		GENERATED_OBJECT_BODY()
 	public:
 		Record(const std::string& name = "") : _Name(name) {}
 		virtual ~Record() = default;
@@ -80,8 +66,8 @@ namespace Reflect
 		std::string _Name;
 		std::map<std::string, std::any> _AttributeMap;
 	private:
-		template<typename T> friend struct TCustomClassModifier;
-		template<typename T> friend struct TDefaultClassInitializer;
+		template<typename T> friend struct TCustomTypeModifier;
+		template<typename T> friend struct TDefaultTypeInitializer;
 	};
 
 }

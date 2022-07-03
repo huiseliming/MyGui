@@ -2,10 +2,8 @@
 #include "Record.h"
 #include <spdlog/spdlog.h>
 
-namespace Reflect
+namespace Core
 {
-    class Enum;
-    class Class;
 
     enum ECastTypeFlagBits : uint32_t
     {
@@ -55,8 +53,9 @@ namespace Reflect
     template<> struct TStaticBuiltinTypeFlag<double>      { static constexpr ECastTypeFlagBits Value = ECastTypeFlagBits::CTFB_DoubleBit; };
     template<> struct TStaticBuiltinTypeFlag<std::string> { static constexpr ECastTypeFlagBits Value = ECastTypeFlagBits::CTFB_StringBit; };
 
-    class MYGUI_API Type : public Record
+    class MYGUI_API CLASS() Type : public Record
 	{
+        GENERATED_OBJECT_BODY()
 	public:
 		Type(const std::string& name = "") : Record(name) {}
 
@@ -293,6 +292,24 @@ namespace Reflect
         type_index_map_ref[type_index] = return_type;
         return return_type;
     }
+
+    template<typename T>
+    struct TCustomTypeModifier {
+        void operator()(Type* initialized_type) {}
+    };
+    template<typename T>
+    struct TDefaultTypeInitializer {
+        void operator()(Type* uninitialized_type) {}
+    };
+
+    template<typename T>
+    struct TTypeAutoInitializer {
+        TTypeAutoInitializer() {
+            Type* reflect_type = GetType<T>();
+            TDefaultTypeInitializer<T>()(reflect_type);
+            TCustomTypeModifier<T>()(reflect_type);
+        }
+    };
 
     MYGUI_API bool VerifyStaticTypeInitializationResult();
 

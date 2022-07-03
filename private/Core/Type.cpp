@@ -1,6 +1,6 @@
-#include "Reflect/Type.h"
-#include "Reflect/Enum.h"
-#include "Reflect/Class.h"
+#include "Core/Type.h"
+#include "Core/Enum.h"
+#include "Core/Class.h"
 
 #define GET_STATIC_TYPE_FUNCTION_IMPL(BuiltinType, NameString)              \
 	template<> Type* GetStaticType<BuiltinType>()                           \
@@ -9,7 +9,7 @@
 		return &NameString##Type;                                           \
 	}
 
-namespace Reflect
+namespace Core
 {
 	GET_STATIC_TYPE_FUNCTION_IMPL(bool       , Bool)
 	GET_STATIC_TYPE_FUNCTION_IMPL(float      , Float)

@@ -30,7 +30,8 @@ std::string GeneratedOuputDir;
 
 struct TranslationUnitClientData
 {
-    CursorNode* _ParentCursorNode{ nullptr };
+
+    std::stack<CursorNode*> _CursorNodeStack;
     CursorNode* _CurrentCursorNode{ nullptr };
     CursorNode _RootCursorNode;
     std::string _OriginalHeader;
@@ -47,6 +48,58 @@ std::string ToString(CXString cx_string)
     return ret_val;
 }
 void CursorNodeLoop(TranslationUnitClientData& translation_unit_client_data_ref, CursorNode* cursor_node);
+
+bool IsCursorEqual(CXCursor cursor1,CXCursor cursor2)
+{
+    return 
+        cursor1.data[0] == cursor2.data[0] && 
+        cursor1.data[1] == cursor2.data[1] && 
+        cursor1.data[2] == cursor2.data[2] && 
+        cursor2.xdata == cursor2.xdata;
+}
+
+bool HasMetaAttribute(CXCursor in_cursor)
+{
+    struct VisitData
+    {
+        std::string _MetaAttributeString;
+        bool _HasMetaAttribute = false;
+    } visit_data;
+    clang_visitChildren(
+        in_cursor,
+        [](CXCursor current_cursor, CXCursor parent_cursor, CXClientData client_data) {
+            VisitData* visit_data_ptr = (VisitData*)client_data;
+            if (clang_isAttribute(clang_getCursorKind(current_cursor))) {
+                CXString current_cursor_spelling = clang_getCursorSpelling(current_cursor);
+                std::string attributes_string = clang_getCString(current_cursor_spelling);
+                if (attributes_string.substr(0, 4) == "meta")
+                {
+                    if (attributes_string.size() > 4)
+                    {
+                        visit_data_ptr->_MetaAttributeString = attributes_string.substr(5);
+                    }
+                    visit_data_ptr->_HasMetaAttribute = true;
+                }
+                return CXChildVisit_Break;
+            }
+            return CXChildVisit_Continue;
+        },
+        &visit_data);
+    return visit_data._HasMetaAttribute;
+}
+
+
+CursorNode* CreateCursorNode(TranslationUnitClientData* translation_unit_client_data_ptr, CXCursor cursor, std::string& MetaAttributeString)
+{
+    CursorNode* cursor_node = nullptr;
+    translation_unit_client_data_ptr->_CursorNodeStack.top()->_ChildrenCursorNode.push_back(std::make_unique<CursorNode>());
+    cursor_node = translation_unit_client_data_ptr->_CursorNodeStack.top()->_ChildrenCursorNode.back().get();
+    cursor_node->_ParentCursorNode = translation_unit_client_data_ptr->_CursorNodeStack.top();
+    cursor_node->_Cursor = cursor;
+    cursor_node->_Attributes = ParseMetaAttributeString(MetaAttributeString);
+    translation_unit_client_data_ptr->_CurrentCursorNode = cursor_node;
+    return cursor_node;
+}
 
 int main(int ArgC, char* ArgV[])
 {
@@ -160,19 +213,33 @@ int main(int ArgC, char* ArgV[])
             for (size_t i = 0; i < diagnostics_num; i++)
             {
                 CXDiagnostic diagnostic = clang_getDiagnostic(translation_unit, i);
-                unsigned options = 
-                    CXDiagnostic_DisplaySourceLocation |
-                    CXDiagnostic_DisplayColumn |
-                    CXDiagnostic_DisplayOption |
-                    CXDiagnostic_DisplaySourceRanges |
-                    CXDiagnostic_DisplayCategoryId |
-                    CXDiagnostic_DisplayCategoryName;
-                CXString formatted_diagnostic = clang_formatDiagnostic(diagnostic, options);
-                std::cout << ToString(formatted_diagnostic) << std::endl;
+                CXDiagnosticSeverity diagnostic_severity = clang_getDiagnosticSeverity(diagnostic);
+                switch (diagnostic_severity)
+                {
+                case CXDiagnostic_Ignored:
+                case CXDiagnostic_Note:
+                case CXDiagnostic_Warning:
+                    break;
+                case CXDiagnostic_Error:
+                case CXDiagnostic_Fatal:
+                {
+                    unsigned options =
+                        CXDiagnostic_DisplaySourceLocation |
+                        CXDiagnostic_DisplayColumn |
+                        CXDiagnostic_DisplayOption |
+                        CXDiagnostic_DisplaySourceRanges |
+                        CXDiagnostic_DisplayCategoryId |
+                        CXDiagnostic_DisplayCategoryName;
+                    CXString formatted_diagnostic = clang_formatDiagnostic(diagnostic, options);
+                    std::cout << ToString(formatted_diagnostic) << std::endl;
+                }
+                default:
+                    break;
+                }
             }
             CXCursor translation_unit_cursor = clang_getTranslationUnitCursor(translation_unit);
             translation_unit_client_data._RootCursorNode._Cursor = translation_unit_cursor;
-            translation_unit_client_data._ParentCursorNode = &translation_unit_client_data._RootCursorNode;
+            translation_unit_client_data._CursorNodeStack.push(&translation_unit_client_data._RootCursorNode);
             translation_unit_client_data._CurrentCursorNode = &translation_unit_client_data._RootCursorNode;
             clang_visitChildren(
                 translation_unit_cursor,
@@ -185,14 +252,19 @@ int main(int ArgC, char* ArgV[])
                     {
                         return CXChildVisit_Continue;
                     }
-                    std::cout << ToString(clang_getCursorKindSpelling(clang_getCursorKind(current_cursor))) << std::endl;
+                    if (!IsCursorEqual(translation_unit_client_data_ptr->_CursorNodeStack.top()->_Cursor, parent_cursor))
+                    {
+                        translation_unit_client_data_ptr->_CursorNodeStack.pop();
+                    }
+                    //std::cout << ToString(clang_getCursorKindSpelling(clang_getCursorKind(current_cursor))) << std::endl;
                     CXCursorKind current_cursor_kind = clang_getCursorKind(current_cursor);
                     struct VisitData
                     {
                         std::string _MetaAttributeString;
                         bool _HasMetaAttribute = false;
                     } visit_data;
-                    clang_visitChildren(current_cursor,
+                    clang_visitChildren(
+                        current_cursor,
                         [](CXCursor current_cursor, CXCursor parent_cursor, CXClientData client_data) {
                             VisitData* visit_data_ptr = (VisitData*)client_data;
                             if (clang_isAttribute(clang_getCursorKind(current_cursor))) {
@@ -210,31 +282,43 @@ int main(int ArgC, char* ArgV[])
                             }
                             return CXChildVisit_Continue;
                         },
-                        & visit_data);
+                        &visit_data);
                     CursorNode* current_cursor_node = nullptr;
-                    if(current_cursor_kind != CXCursor_CXXBaseSpecifier && current_cursor_kind != CXCursor_EnumConstantDecl && current_cursor_kind != CXCursor_Namespace && !visit_data._HasMetaAttribute)
-                    {
-                        return CXChildVisit_Continue;
-                    }
-                    translation_unit_client_data_ptr->_ParentCursorNode->_ChildrenCursorNode.push_back(std::make_unique<CursorNode>());
-                    current_cursor_node = translation_unit_client_data_ptr->_ParentCursorNode->_ChildrenCursorNode.back().get();
-                    current_cursor_node->_ParentCursorNode = translation_unit_client_data_ptr->_ParentCursorNode;
-                    current_cursor_node->_Cursor = current_cursor;
-                    current_cursor_node->_Attributes = ParseMetaAttributeString(visit_data._MetaAttributeString);
-                    translation_unit_client_data_ptr->_CurrentCursorNode = current_cursor_node;
                     switch (current_cursor_kind)
                     {
                     case CXCursor_Namespace:
+                        current_cursor_node = CreateCursorNode(translation_unit_client_data_ptr, current_cursor, visit_data._MetaAttributeString);
+                        translation_unit_client_data_ptr->_CursorNodeStack.push(current_cursor_node);
+                        return CXChildVisit_Recurse;
                     case CXCursor_StructDecl:
                     case CXCursor_ClassDecl:
                     case CXCursor_EnumDecl:
-                        translation_unit_client_data_ptr->_ParentCursorNode = current_cursor_node;
-                        return CXChildVisit_Recurse;
-                    case CXCursor_EnumConstantDecl:
+                        if (visit_data._HasMetaAttribute)
+                        {
+                            current_cursor_node = CreateCursorNode(translation_unit_client_data_ptr, current_cursor, visit_data._MetaAttributeString);
+                            translation_unit_client_data_ptr->_CursorNodeStack.push(current_cursor_node);
+                            return CXChildVisit_Recurse;
+                        }
                         return CXChildVisit_Continue;
                     case CXCursor_CXXBaseSpecifier:
-                        translation_unit_client_data_ptr->_ParentCursorNode = current_cursor_node;
+                        current_cursor_node = CreateCursorNode(translation_unit_client_data_ptr, current_cursor, visit_data._MetaAttributeString);
+                        translation_unit_client_data_ptr->_CursorNodeStack.push(current_cursor_node);
                         return CXChildVisit_Recurse;
+                    case CXCursor_EnumConstantDecl:
+                        current_cursor_node = CreateCursorNode(translation_unit_client_data_ptr, current_cursor, visit_data._MetaAttributeString);
+                        return CXChildVisit_Continue;
+                    case CXCursor_TypeRef:
+                        if (clang_getCursorKind(parent_cursor) == CXCursor_CXXBaseSpecifier)
+                        {
+                            current_cursor_node = CreateCursorNode(translation_unit_client_data_ptr, current_cursor, visit_data._MetaAttributeString);
+                        }
+                        return CXChildVisit_Continue;
+                    case CXCursor_FieldDecl:
+                        if (visit_data._HasMetaAttribute)
+                        {
+                            current_cursor_node = CreateCursorNode(translation_unit_client_data_ptr, current_cursor, visit_data._MetaAttributeString);
+                        }
+                        return CXChildVisit_Continue;
                     default:
                         return CXChildVisit_Continue;
                         break;
@@ -244,7 +328,8 @@ int main(int ArgC, char* ArgV[])
                 &translation_unit_client_data);
 
             translation_unit_client_data._GeneratedSourceCode = "#include \"" + translation_unit_client_data._OriginalHeader + "\"\n";
-            translation_unit_client_data._GeneratedHeaderCode = "#pragma once";
+            translation_unit_client_data._GeneratedSourceCode = "#include \"Core/Reflect.h\"\n";
+            translation_unit_client_data._GeneratedHeaderCode = "#pragma once\n";
             CursorNodeLoop(translation_unit_client_data, &translation_unit_client_data._RootCursorNode);
             std::cout << " --- GeneratedHeaderCode ---" << std::endl;
             //std::cout << translation_unit_client_data._GeneratedHeaderCode << std::endl;
@@ -327,24 +412,29 @@ void CursorNodeLoop(TranslationUnitClientData& translation_unit_client_data_ref,
         case CXCursor_StructDecl:
         case CXCursor_ClassDecl:
         {
-            children_cursor_node->_Data["children"] = nlohmann::json::array();
+            children_cursor_node->_Data["parent_classes"] = nlohmann::json::array();
+            children_cursor_node->_Data["fields"] = nlohmann::json::array();
             CursorNodeLoop(translation_unit_client_data_ref, children_cursor_node);
 
             std::string class_source_template =R"(
 namespace {{namespace}}{
 template<>
-struct TDefaultClassInitializer<{{name}}>
+struct TDefaultTypeInitializer<{{name}}>
 {
-    void operator()(Class* uninitialized_class)
+    void operator()(Type* uninitialized_type)
     {
+        Class* uninitialized_class = static_cast<Class*>(uninitialized_type);
         AddTypeToNameMap("{{namespace}}::{{name}}", uninitialized_class);
+
+## for parent_class in parent_classes
+        {% if parent_class.is_reflect_class %}uninitialized_class->_ParentClasses.push_back({{parent_class.name}}::StaticClass());{% else %}uninitialized_class->_ParentClasses.push_back(nullptr);{% endif %}
+## endfor
 {% for key, value in attributes %}
         uninitialized_class->_AttributeMap.insert(std::make_pair("{{key}}", std::any({{value}})));{% endfor %}
 
-## for child in children
-        uninitialized_class->_Fields.push_back(MakeField<{{child.cpp_type}}>("{{child.name}}", offsetof({{name}}, {{child.name}})));{% for key, value in child.attributes %}
+## for field in fields
+        uninitialized_class->_Fields.push_back(MakeField<{{field.cpp_type}}>("{{field.name}}", offsetof({{name}}, {{field.name}})));{% for key, value in field.attributes %}
         uninitialized_class->_Fields.back()->_AttributeMap.insert(std::make_pair("{{key}}", std::any({{value}})));{% endfor %}
-
 ## endfor
     }
 };
@@ -353,7 +443,7 @@ Class* {{name}}::StaticClass()
     static Class static_class("{{namespace}}::{{name}}");
     return &static_class;
 }
-static TClassAutoInitializer<{{name}}> S{{name}}AutoInitializer;
+static TTypeAutoInitializer<{{name}}> S{{name}}AutoInitializer;
 })";
             
             children_cursor_node->_Data["namespace"] = GetNamespaceName(cursor_node);
@@ -364,12 +454,12 @@ static TClassAutoInitializer<{{name}}> S{{name}}AutoInitializer;
         {
             CXType type = clang_getCursorType(children_cursor);
             children_cursor_node->_Data["cpp_type"] = ToString(clang_getTypeSpelling(type));
-            cursor_node->_Data["children"].push_back(children_cursor_node->_Data);
+            cursor_node->_Data["fields"].push_back(children_cursor_node->_Data);
             break;
         }
         case CXCursor_EnumDecl:
         {
-            children_cursor_node->_Data["children"] = nlohmann::json::array();
+            children_cursor_node->_Data["enum_constants"] = nlohmann::json::array();
             CursorNodeLoop(translation_unit_client_data_ref, children_cursor_node);
 
             std::string enum_header_template = R"(
@@ -381,13 +471,14 @@ static TClassAutoInitializer<{{name}}> S{{name}}AutoInitializer;
             std::string enum_source_template = R"(
 namespace {{namespace}}{
 template<>
-struct TDefaultEnumInitializer<{{name}}>
+struct TDefaultTypeInitializer<{{name}}>
 {
-    void operator()(Enum* uninitialized_enum)
+    void operator()(Type* uninitialized_type)
     {
+        Enum* uninitialized_enum = static_cast<Enum*>(uninitialized_type);
         AddTypeToNameMap("{{namespace}}::{{name}}", uninitialized_enum);
-## for child in children
-        uninitialized_enum->_EnumValueMap.insert(std::make_pair({{name}}::{{child.name}}, EnumValue{ {{name}}::{{child.name}}, "{{child.name}}", "{{child.display_name}}" }));
+## for enum_constant in enum_constants
+        uninitialized_enum->_EnumValueMap.insert(std::make_pair({{name}}::{{enum_constant.name}}, EnumValue{ {{name}}::{{enum_constant.name}}, "{{enum_constant.name}}", "{{enum_constant.display_name}}" }));
 ## endfor
     }
 };
@@ -397,7 +488,7 @@ Enum* GetStaticEnum<{{name}}>()
 	static Enum static_enum("{{namespace}}::{{name}}");
 	return &static_enum;
 }
-static TEnumAutoInitializer<{{name}}> S{{name}}AutoInitializer;
+static TTypeAutoInitializer<{{name}}> S{{name}}AutoInitializer;
 })";
             children_cursor_node->_Data["namespace"] = GetNamespaceName(cursor_node);
             translation_unit_client_data_ref._GeneratedSourceCode += inja::render(enum_source_template, children_cursor_node->_Data);
@@ -428,11 +519,17 @@ static TEnumAutoInitializer<{{name}}> S{{name}}AutoInitializer;
             {
                 children_cursor_node->_Data["display_name"] = children_cursor_node->_Data["name"];
             }
-            cursor_node->_Data["children"].push_back(children_cursor_node->_Data);
+            cursor_node->_Data["enum_constants"].push_back(children_cursor_node->_Data);
             break;
         }
-        case CXCursor_CXXBaseSpecifier:
-            std::cout << "'" << clang_getCursorSpelling(children_cursor) << "' of kind '" << clang_getCursorKindSpelling(clang_getCursorKind(children_cursor)) << "'\n";
+        case CXCursor_TypeRef:
+            if (clang_getCursorKind(cursor_node->_Cursor) == CXCursor_CXXBaseSpecifier)
+            {
+                children_cursor_node->_Data["name"] = ToString(clang_getTypeSpelling(clang_getCursorType(children_cursor_node->_Cursor)));
+                CXCursor parent_class_cursor = clang_getTypeDeclaration(clang_getCursorType(children_cursor_node->_Cursor));
+                children_cursor_node->_Data["is_reflect_class"] = HasMetaAttribute(parent_class_cursor);
+                cursor_node->_ParentCursorNode->_Data["parent_classes"].push_back(children_cursor_node->_Data);
+            }
             break;
         default:
             CursorNodeLoop(translation_unit_client_data_ref, children_cursor_node);

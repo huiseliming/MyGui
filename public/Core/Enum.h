@@ -1,7 +1,7 @@
 #pragma once
 #include "Type.h"
 
-namespace Reflect
+namespace Core
 {
 
 	struct EnumValue
@@ -13,8 +13,9 @@ namespace Reflect
 
 	MYGUI_API extern EnumValue EmptyEnumValue;
 
-	class MYGUI_API Enum : public Type
+	class MYGUI_API CLASS() Enum : public Type
 	{
+		GENERATED_OBJECT_BODY()
 	public:
 		Enum(const std::string& name = "")
 			: Type(name)
@@ -36,26 +37,8 @@ namespace Reflect
 		std::map<uint64_t, EnumValue> _EnumValueMap;
 
 	private:
-		template<typename T> friend struct TCustomEnumModifier;
-		template<typename T> friend struct TDefaultEnumInitializer;
-	};
-
-	template<typename T>
-	struct TCustomEnumModifier {
-		void operator()(Enum* initialized_enum) {}
-	};
-	template<typename T>
-	struct TDefaultEnumInitializer {
-		void operator()(Enum* uninitialized_enum) {}
-	};
-
-	template<typename T>
-	struct TEnumAutoInitializer {
-		TEnumAutoInitializer() {
-			Enum* reflect_enum = static_cast<Enum*>(GetType<T>());
-			TDefaultEnumInitializer<T>()(reflect_enum);
-			TCustomEnumModifier<T>()(reflect_enum);
-		}
+		template<typename T> friend struct TCustomTypeModifier;
+		template<typename T> friend struct TDefaultTypeInitializer;
 	};
 
 	// @test begin
@@ -74,9 +57,9 @@ namespace Reflect
 	
 	MYGUI_API
 	template<>
-	struct TCustomEnumModifier<ETestEnum> 
+	struct TCustomTypeModifier<ETestEnum> 
 	{
-		void operator()(Enum* initialized_enum);
+		void operator()(Type* initialized_type);
 	};
 	// @test end
 };

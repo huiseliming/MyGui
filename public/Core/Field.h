@@ -1,7 +1,7 @@
 #pragma once
 #include "Type.h"
 
-namespace Reflect
+namespace Core
 {
 	enum EFieldFlagBits : uint32_t
 	{
@@ -11,8 +11,9 @@ namespace Reflect
 		FFB_RValueRefBits = FFB_LValueRefBit | FFB_RValueRefBit,
 	};
 
-	class MYGUI_API Field : public Record
+	class MYGUI_API CLASS() Field : public Record
 	{
+		GENERATED_OBJECT_BODY()
 	public:
 		Field(const std::string& name = "", uint32_t memory_offset = 0, Type* type = nullptr)
 			: Record(name)
@@ -85,7 +86,7 @@ namespace Reflect
 	{
 	public:
 		TSimpleField(const std::string& name = "", uint32_t memory_offset = 0)
-			: Field(name, memory_offset, Reflect::GetType<T>())
+			: Field(name, memory_offset, Core::GetType<T>())
 		{
 		}
 	};
@@ -95,7 +96,7 @@ namespace Reflect
 		using FieldAccessor = TFieldAccessor<bool>;
 	public:
 		BoolField(const std::string& name = "", uint32_t memory_offset = 0)
-			: Field(name, memory_offset, Reflect::GetType<bool>())
+			: Field(name, memory_offset, Core::GetType<bool>())
 		{}
 
 		virtual void SetBool(void* field_owner_ptr, bool value) const override
@@ -118,7 +119,7 @@ namespace Reflect
 		using FieldAccessor = TFieldAccessor<T>;
 	public:
 		TNumericField(const std::string& name = "", uint32_t memory_offset = 0)
-			: Field(name, memory_offset, Reflect::GetType<T>())
+			: Field(name, memory_offset, Core::GetType<T>())
 		{}
 
 		virtual void SetUInt(void* field_owner_ptr, uint64_t value) const override
@@ -190,7 +191,7 @@ namespace Reflect
 	public:
 
 		StringField(const std::string& name = "", uint32_t memory_offset = 0)
-			: Field(name, memory_offset, Reflect::GetType<std::string>())
+			: Field(name, memory_offset, Core::GetType<std::string>())
 		{}
 
 		virtual std::string GetString(void const* field_owner_ptr) const override
@@ -242,7 +243,7 @@ namespace Reflect
 	{
 	public:
 		TClassField(const std::string& name = "", uint32_t memory_offset = 0)
-			: ClassField(name, memory_offset, Reflect::GetType<T>())
+			: ClassField(name, memory_offset, Core::GetType<T>())
 		{}
 
 	};
@@ -261,7 +262,7 @@ namespace Reflect
 		using FieldAccessor = TFieldAccessor<T>;
 	public:
 		TEnumField(const std::string& name = "", uint32_t memory_offset = 0)
-			: EnumField(name, memory_offset, Reflect::GetType<T>())
+			: EnumField(name, memory_offset, Core::GetType<T>())
 		{}
 		virtual void SetUInt(void* field_owner_ptr, uint64_t value) const override 
 		{
@@ -286,7 +287,7 @@ namespace Reflect
 	{
 	public:
 		PointerField(const std::string& name = "", uint32_t memory_offset = 0, Type* type = nullptr)
-			: Field(name, memory_offset, Reflect::GetType<T>())
+			: Field(name, memory_offset, Core::GetType<T>())
 		{}
 	};
 

@@ -451,29 +451,29 @@ struct TDefaultTypeInitializer<{{name}}>
         uninitialized_class->_AttributeMap.insert(std::make_pair("{{key}}", std::any({{value}})));{% endfor %}
 
 ## for field in fields
-        uninitialized_class->_Fields.push_back(MakeField<{{field.cpp_type}}>("{{field.name}}", offsetof({{name}}, {{field.name}})));{% for key, value in field.attributes %}
+        uninitialized_class->_Fields.push_back(Core::MakeField<{{field.cpp_type}}>("{{field.name}}", offsetof({{name}}, {{field.name}})));{% for key, value in field.attributes %}
         uninitialized_class->_Fields.back()->_AttributeMap.insert(std::make_pair("{{key}}", std::any({{value}})));{% endfor %}
 ## endfor
 
 ## for function in functions
         {
-            struct VMCallObject
+            struct ScriptStruct
             {
 ## for parm in function.parms
-                {{parm.cpp_type}} {{parm.name}};
+                Core::ConvertToRefWrapper<{{parm.cpp_type}}> {{parm.name}} { (*(std::add_pointer_t<std::remove_cvref_t<{{parm.cpp_type}}>>)nullptr) };
 ## endfor
-                int __return;
+                Core::ConvertToRefWrapper<{{function.return_type}}> __return { (*(std::add_pointer_t<std::remove_cvref_t<{{function.return_type}}>>)nullptr) };
             };
-            uninitialized_class->_Functions.push_back(std::make_unique<Function>("{{function.name}}"));
-            Function* this_funtion = uninitialized_class->_Functions.back().get();
+            uninitialized_class->_Functions.push_back(std::make_unique<TFunction<ScriptStruct, decltype(&{{namespace}}::{{name}}::{{function.name}})>>("{{function.name}}"));
+            TFunction<ScriptStruct, decltype(&{{namespace}}::{{name}}::{{function.name}})>* funtion = static_cast<TFunction<ScriptStruct, decltype(&{{namespace}}::{{name}}::{{function.name}})>*>(uninitialized_class->_Functions.back().get());
 ## for parm in function.parms
-            this_funtion->_Fields.push_back(MakeField<{{parm.cpp_type}}>("{{parm.name}}", offsetof(VMCallObject, {{parm.name}})));
+            funtion->_Fields.push_back(Core::MakeFieldByConvertToRefWrapper<{{parm.cpp_type}}>("{{parm.name}}", offsetof(ScriptStruct, {{parm.name}})));
 ## endfor
-            this_funtion->_Fields.push_back(MakeField<int>("__return", offsetof(VMCallObject, __return)));
-            //this_funtion->_NativeCall = (void*) &TestStruct::TestAdd;
-            this_funtion->_VMCall =  [](void* in_object, void* in_vm_call_object) {
-                TestStruct* object = (TestStruct*)in_object;
-                VMCallObject* vm_call_object = (VMCallObject*)in_vm_call_object;
+            funtion->_Fields.push_back(Core::MakeFieldByConvertToRefWrapper<{{function.return_type}}>("__return", offsetof(ScriptStruct, __return)));
+            funtion->_NativeCall = &{{namespace}}::{{name}}::{{function.name}};
+            funtion->_VMCall =  [](void* in_object, void* in_script_struct) {
+                {{name}}* object = ({{name}}*)in_object;
+                ScriptStruct* vm_call_object = (ScriptStruct*)in_script_struct;
                 vm_call_object->__return = object->TestAdd({% for parm in function.parms %}vm_call_object->{{parm.name}}{% if not loop.is_last %}, {% endif %}{% endfor %});
             };
         }
@@ -502,12 +502,13 @@ static TTypeAutoInitializer<{{name}}> S{{name}}AutoInitializer;
         case CXCursor_CXXMethod:
         {
             children_cursor_node->_Data["parms"] = nlohmann::json::array();
-
+            children_cursor_node->_Data["return_type"] = ToString(clang_getTypeSpelling(clang_getResultType(clang_getCursorType(children_cursor))));
             for (size_t i = 0; i < children_cursor_node->_ChildrenCursorNode.size(); i++)
             {
                 children_cursor_node->_Data["parms"].push_back(nlohmann::json::object());
                 CursorNode* parm_cursor_node = children_cursor_node->_ChildrenCursorNode[i].get();
                 children_cursor_node->_Data["parms"][i]["name"] = ToString(clang_getCursorSpelling(parm_cursor_node->_Cursor));
+                //std::string parm_cpp_type = ToString(clang_getTypeSpelling(clang_getCursorType(parm_cursor_node->_Cursor)));
                 children_cursor_node->_Data["parms"][i]["cpp_type"] = ToString(clang_getTypeSpelling(clang_getCursorType(parm_cursor_node->_Cursor)));
             }
             cursor_node->_Data["functions"].push_back(children_cursor_node->_Data);

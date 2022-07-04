@@ -113,6 +113,24 @@ namespace Core
 		return static_pointer_type_point_to_type_index_map;
 	}
 
+	std::vector<std::unique_ptr<ReferenceWrapperType>>& GetStaticReferenceWrapperTypes()
+	{
+		static std::vector<std::unique_ptr<ReferenceWrapperType>> static_reference_wrapper_type_vector;
+		return static_reference_wrapper_type_vector;
+	}
+
+	std::unordered_map<std::type_index, ReferenceWrapperType*>& GetUninitializeReferenceWrapperTypeMap()
+	{
+		static std::unordered_map<std::type_index, ReferenceWrapperType*> static_uninitialize_reference_wrapper_type_map;
+		return static_uninitialize_reference_wrapper_type_map;
+	}
+
+	std::unordered_map<std::type_index, Type*>& GetReferenceWrapperTypeWrappedTypeMap()
+	{
+		static std::unordered_map<std::type_index, Type*> static_reference_wrapper_type_wrapped_type_map;
+		return static_reference_wrapper_type_wrapped_type_map;
+	}
+
 	bool VerifyStaticTypeInitializationResult()
 	{
 		auto& uninitialize_pointer_type_map_ref = GetUninitializePointerTypeMap();

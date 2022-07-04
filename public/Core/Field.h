@@ -283,10 +283,19 @@ namespace Core
 	};
 
 	template<typename T>
-	class MYGUI_API PointerField : public Field
+	class MYGUI_API TPointerField : public Field
 	{
 	public:
-		PointerField(const std::string& name = "", uint32_t memory_offset = 0, Type* type = nullptr)
+		TPointerField(const std::string& name = "", uint32_t memory_offset = 0, Type* type = nullptr)
+			: Field(name, memory_offset, Core::GetType<T>())
+		{}
+	};
+
+	template<typename T>
+	class TReferenceWrapperField : public Field
+	{
+	public:
+		TReferenceWrapperField(const std::string& name = "", uint32_t memory_offset = 0, Type* type = nullptr)
 			: Field(name, memory_offset, Core::GetType<T>())
 		{}
 	};
@@ -296,8 +305,10 @@ namespace Core
 	{
 		static_assert(!std::is_reference_v<T>);
 		Field* Field = nullptr;
-		if constexpr (std::is_pointer_v<T>)
-			return std::make_unique<PointerField<T>>(name, memory_offset);
+		if constexpr (IsReferenceWrapperType<T>::value)
+			return std::make_unique<TReferenceWrapperField<T>>(name, memory_offset);
+		else if constexpr (std::is_pointer_v<T>)
+			return std::make_unique<TPointerField<T>>(name, memory_offset);
 		else if constexpr (std::is_same_v<bool, T>)
 			return std::make_unique<BoolField>(name, memory_offset);
 		else if constexpr (std::is_arithmetic_v<T>)
@@ -328,10 +339,9 @@ namespace Core
 	}
 
 	template<typename T>
-	std::unique_ptr<Field> MakeRefField(const std::string& name, uint32_t memory_offset)
+	std::unique_ptr<Field> MakeFieldByConvertToRefWrapper(const std::string& name, uint32_t memory_offset)
 	{
-		static_assert(std::is_reference_v<T>);
-		return Field;
+		return MakeField<ConvertToRefWrapper<T>>(name, memory_offset);
 	}
 	
 }

@@ -20,6 +20,29 @@ public:
                 ImGui::Begin("TestStruct");
                 static Core::TestStruct test_struct;
                 Core::Class* reflect_class = Core::TestStruct::StaticClass();
+                {
+                    Core::Function* function = reflect_class->GetFunctions()[0].get();
+                    void* script_struct = function->New();
+                    int value_a = 5;
+                    int* value_a_ptr = &value_a;
+                    {
+                        Core::Field* field = function->GetFields()[0].get();
+                        std::reference_wrapper<int*>* data_ptr = field->GetFieldDataPtrAs<std::reference_wrapper<int*>>(script_struct);
+                        *data_ptr = value_a_ptr;
+                    }
+                    {
+                        Core::Field* field = function->GetFields()[1].get();
+                        std::reference_wrapper<int >* data_ptr = field->GetFieldDataPtrAs<std::reference_wrapper<int>>(script_struct);
+                        *data_ptr = value_a;
+                    }
+                    function->GetVMCallFuncPtr()(&test_struct, script_struct);
+                    std::reference_wrapper<int >* data_ptr = function->GetFields().back()->GetFieldDataPtrAs<std::reference_wrapper<int>>(script_struct);
+                    int c = data_ptr->get();
+                    ImGui::Text("%d", c);
+                    auto obejct_native_call = *function->GetNativeCallFuncPtrAs<decltype(&Core::TestStruct::TestAdd)>();
+                    int d = (test_struct.*obejct_native_call)(value_a_ptr, c);
+                    ImGui::Text("%d", d);
+                }
                 auto& reflect_class_fields = reflect_class->GetFields();
                 for (size_t i = 0; i < reflect_class_fields.size(); i++)
                 {

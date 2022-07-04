@@ -36,6 +36,7 @@ namespace Core
         CTFB_IntBits = CTFB_SIntBits | CTFB_UIntBits,
         CTFB_FloatBits = CTFB_FloatBit | CTFB_DoubleBit,
 
+        CTFB_ReferenceWrapperBit = 1ULL << 30,
         CTFB_PointerBit = 1ULL << 31,
     };
 
@@ -70,17 +71,18 @@ namespace Core
         void  MoveAssign(void* A, void* B)  { _MoveAssign(A, B); }
 
         virtual Type* GetPointToType() const { return nullptr; }
+        virtual Type* GetWrappedType() const { return nullptr; }
 
 	protected:
 		uint32_t _CastTypeFlag;
 		uint32_t _MemorySize;
 
-		void* (*_New)        (            );
-		void  (*_Delete)     (void*       );
-		void  (*_Constructor)(void*       );
-		void  (*_Destructor) (void*       );
-		void  (*_CopyAssign) (void*, void*);
-		void  (*_MoveAssign) (void*, void*);
+		void* (*_New)        (            ) {nullptr};
+		void  (*_Delete)     (void*       ) {nullptr};
+		void  (*_Constructor)(void*       ) {nullptr};
+		void  (*_Destructor) (void*       ) {nullptr};
+		void  (*_CopyAssign) (void*, void*) {nullptr};
+		void  (*_MoveAssign) (void*, void*) {nullptr};
     private:
         template<typename T> friend Type* GetType();
 	};
@@ -108,29 +110,6 @@ namespace Core
         TSimpleStaticType(const std::string& name = "")
             : TType<T>(name)
         {}
-    };
-
-    class PointerType : public Type
-    {
-        using CppType = void*;
-    public:
-        PointerType(const std::string& name = "")
-            : Type(name)
-        {
-            _MemorySize = sizeof(CppType);
-            _New         = []() -> void* { return new CppType(); };
-            _Delete      = [](void* A) { delete static_cast<CppType*>(A); };
-            _Constructor = [](void* A) { new (A) CppType(); };
-            _Destructor  = [](void* A) { ((const CppType*)(A))->~CppType(); };
-            _CopyAssign  = [](void* A, void* B) { *static_cast<CppType*>(A) = *static_cast<CppType*>(B); };
-            _MoveAssign  = [](void* A, void* B) { *static_cast<CppType*>(A) = std::move(*static_cast<CppType*>(B)); };
-        }
-
-        virtual Type* GetPointToType() const { return _PointToType; }
-    private:
-        Type* _PointToType{ nullptr };
-    private:
-        template<typename T> friend Type* GetType();
     };
 
     template<typename T> Type* GetStaticType() { return nullptr; }
@@ -173,9 +152,33 @@ namespace Core
     MYGUI_API Type* GetType(const std::type_info& type_info);
 
     // 
+    class PointerType : public Type
+    {
+        using CppType = void*;
+    public:
+        PointerType(const std::string& name = "")
+            : Type(name)
+        {
+            _MemorySize = sizeof(CppType);
+            _New = []() -> void* { return new CppType(); };
+            _Delete = [](void* A) { delete static_cast<CppType*>(A); };
+            _Constructor = [](void* A) { new (A) CppType(); };
+            _Destructor = [](void* A) { ((const CppType*)(A))->~CppType(); };
+            _CopyAssign = [](void* A, void* B) { *static_cast<CppType*>(A) = *static_cast<CppType*>(B); };
+            _MoveAssign = [](void* A, void* B) { *static_cast<CppType*>(A) = std::move(*static_cast<CppType*>(B)); };
+        }
+
+        virtual Type* GetPointToType() const override { return _PointToType; }
+    private:
+        Type* _PointToType{ nullptr };
+    private:
+        template<typename T> friend Type* GetType();
+    };
+
     MYGUI_API std::vector<std::unique_ptr<PointerType>>& GetStaticPointerTypes();
     MYGUI_API std::unordered_map<std::type_index, PointerType*>& GetUninitializePointerTypeMap();
     MYGUI_API std::unordered_map<std::type_index, Type*>& GetPointerTypePointToTypeIndexMap();
+
 
     template<typename T>
     struct IsReflectClassType
@@ -187,6 +190,65 @@ namespace Core
     public:
         static constexpr bool value = std::is_same<std::true_type, decltype(Test<T>(nullptr))>::value;
     };
+
+    // 
+
+    template<typename T>
+    struct IsReferenceWrapperType : std::false_type
+    {
+        using WrappedType = void;
+    };
+    template<typename T>
+    struct IsReferenceWrapperType<std::reference_wrapper<T>> : std::true_type
+    {
+        using WrappedType = T;
+    };
+
+    class ReferenceWrapperType : public Type
+    {
+    public:
+        ReferenceWrapperType(const std::string& name = "")
+            : Type(name)
+        {}
+
+        virtual Type* GetWrappedType() const override { return _WrappedType; }
+
+    private:
+        Type* _WrappedType{ nullptr };
+
+    private:
+        template<typename T> friend Type* GetType();
+    };
+
+    template<typename CppType>
+    class TReferenceWrapperType : public ReferenceWrapperType
+    {
+    public:
+        TReferenceWrapperType(const std::string& name = "")
+            : ReferenceWrapperType(name)
+        {
+            using WrappedType = IsReferenceWrapperType<CppType>::WrappedType;
+            _MemorySize = sizeof(CppType);
+            _New = []() -> void* { return new CppType(*(std::add_pointer_t<WrappedType>)nullptr); };
+            _Delete = [](void* A) { delete static_cast<CppType*>(A); };
+            _Constructor = [](void* A) { new (A) CppType(*(std::add_pointer_t<WrappedType>)nullptr); };
+            _Destructor = [](void* A) { ((const CppType*)(A))->~CppType(); };
+            _CopyAssign = [](void* A, void* B) { *static_cast<CppType*>(A) = *static_cast<CppType*>(B); };
+            _MoveAssign = [](void* A, void* B) { *static_cast<CppType*>(A) = std::move(*static_cast<CppType*>(B)); };
+        }
+    };
+
+    template<typename T>
+    using ConvertToRefWrapper = 
+        std::conditional_t<
+            std::is_reference_v<T>, 
+            std::reference_wrapper<std::remove_cvref_t<T>>,
+            std::remove_cv_t<T>
+        >;
+
+    MYGUI_API std::vector<std::unique_ptr<ReferenceWrapperType>>& GetStaticReferenceWrapperTypes();
+    MYGUI_API std::unordered_map<std::type_index, ReferenceWrapperType*>& GetUninitializeReferenceWrapperTypeMap();
+    MYGUI_API std::unordered_map<std::type_index, Type*>& GetReferenceWrapperTypeWrappedTypeMap();
 
     template<typename T>
     constexpr bool ConstexprTrue = true;
@@ -201,10 +263,33 @@ namespace Core
         std::type_index type_index = std::type_index(typeid(T));
         auto type_index_map_iterator = type_index_map_ref.find(type_index);
         if (type_index_map_ref.end() != type_index_map_iterator) return type_index_map_iterator->second;
+
         auto& uninitialize_pointer_type_map_ref = GetUninitializePointerTypeMap();
         auto& pointer_type_point_to_type_index_map_ref = GetPointerTypePointToTypeIndexMap();
+
+        auto& uninitialize_reference_wrapper_type_map_ref = GetUninitializeReferenceWrapperTypeMap();
+        auto& reference_wrapper_type_wrapped_type_map_ref = GetReferenceWrapperTypeWrappedTypeMap();
+
         Type* return_type = nullptr;
-        if      constexpr (std::is_pointer_v<T>)
+        if constexpr (IsReferenceWrapperType<T>::value)
+        {
+            using WrappedType = IsReferenceWrapperType<T>::WrappedType;
+            auto& static_reference_wrapper_types_ref = GetStaticReferenceWrapperTypes();
+            static_reference_wrapper_types_ref.push_back(std::make_unique<TReferenceWrapperType<T>>());
+            auto static_reference_wrapper_type_ptr = static_reference_wrapper_types_ref.back().get();
+            auto reference_wrapper_type_wrapped_type_map_iterator = reference_wrapper_type_wrapped_type_map_ref.find(type_index);
+            if (reference_wrapper_type_wrapped_type_map_iterator != reference_wrapper_type_wrapped_type_map_ref.end())
+            {
+                static_reference_wrapper_type_ptr->_WrappedType = reference_wrapper_type_wrapped_type_map_iterator->second;
+            }
+            else
+            {
+                uninitialize_reference_wrapper_type_map_ref.insert(std::make_pair(type_index, static_reference_wrapper_type_ptr));
+            }
+            return_type = static_reference_wrapper_type_ptr;
+            return_type->_CastTypeFlag = ECastTypeFlagBits::CTFB_ReferenceWrapperBit;
+        }
+        else if constexpr (std::is_pointer_v<T>)
         {
             auto& static_pointer_types_ref = GetStaticPointerTypes();
             static_pointer_types_ref.push_back(std::make_unique<PointerType>());
@@ -280,15 +365,31 @@ namespace Core
         {
             static_assert(ConstexprFalse<T> && "UNSUPPORTED TYPE");
         }
-        using AddPointerType = std::add_pointer_t<T>;
-        std::type_index add_pointer_type_index = typeid(AddPointerType);
-        pointer_type_point_to_type_index_map_ref.insert(std::make_pair(add_pointer_type_index, return_type));
-        auto uninitialize_pointer_type_map_iterator = uninitialize_pointer_type_map_ref.find(add_pointer_type_index);
-        if (uninitialize_pointer_type_map_iterator != uninitialize_pointer_type_map_ref.end())
+        // pointer type 
         {
-            uninitialize_pointer_type_map_iterator->second->_PointToType = return_type;
-            uninitialize_pointer_type_map_ref.erase(uninitialize_pointer_type_map_iterator);
+            using AddPointerType = std::add_pointer_t<T>;
+            std::type_index add_pointer_type_index = typeid(AddPointerType);
+            pointer_type_point_to_type_index_map_ref.insert(std::make_pair(add_pointer_type_index, return_type));
+            auto uninitialize_pointer_type_map_iterator = uninitialize_pointer_type_map_ref.find(add_pointer_type_index);
+            if (uninitialize_pointer_type_map_iterator != uninitialize_pointer_type_map_ref.end())
+            {
+                uninitialize_pointer_type_map_iterator->second->_PointToType = return_type;
+                uninitialize_pointer_type_map_ref.erase(uninitialize_pointer_type_map_iterator);
+            }
         }
+        // reference wrapper type
+        {
+            using ReferenceWrapperType = std::reference_wrapper<T>;
+            std::type_index reference_wrapper_type_index = typeid(ReferenceWrapperType);
+            reference_wrapper_type_wrapped_type_map_ref.insert(std::make_pair(reference_wrapper_type_index, return_type));
+            auto uninitialize_reference_wrapper_type_map_iterator = uninitialize_reference_wrapper_type_map_ref.find(reference_wrapper_type_index);
+            if (uninitialize_reference_wrapper_type_map_iterator != uninitialize_reference_wrapper_type_map_ref.end())
+            {
+                uninitialize_reference_wrapper_type_map_iterator->second->_WrappedType = return_type;
+                uninitialize_reference_wrapper_type_map_ref.erase(uninitialize_reference_wrapper_type_map_iterator);
+            }
+        }
+
         type_index_map_ref[type_index] = return_type;
         return return_type;
     }

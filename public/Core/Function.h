@@ -5,7 +5,7 @@
 namespace Core
 {
 
-	typedef void (*VMCall)(void* object, void* VM_call_object);
+	typedef void (*VMCall)(void* in_object, void* in_script_struct);
 
 	class Function : public Struct
 	{
@@ -14,17 +14,39 @@ namespace Core
 			: Struct(name)
 		{}
 
-		void* GetNativeCallFuncPtr() { return _NativeCall; }
+		virtual void* GetNativeCallFuncPtr() { return nullptr; }
+		template<typename T>
+		T* GetNativeCallFuncPtrAs() { return static_cast<T*>(GetNativeCallFuncPtr()); }
+
 		VMCall GetVMCallFuncPtr() { return _VMCall; }
 
 	private:
-		void* _NativeCall{ nullptr };
 		VMCall _VMCall{ nullptr };
 
 	private:
 		template<typename T> friend struct TCustomTypeModifier;
 		template<typename T> friend struct TDefaultTypeInitializer;
 	};
+
+	template<typename CppType, typename FunctionType>
+	class TFunction : public Function
+	{
+	public:
+		TFunction(const std::string& name = "")
+			: Function(name)
+		{
+			_MemorySize = sizeof(CppType);
+			_New = []() -> void* { return new CppType(); };
+			_Delete = [](void* A) { delete static_cast<CppType*>(A); };
+			_Constructor = [](void* A) { new (A) CppType(); };
+			_Destructor = [](void* A) { ((const CppType*)(A))->~CppType(); };
+			_CopyAssign = [](void* A, void* B) { *static_cast<CppType*>(A) = *static_cast<CppType*>(B); };
+			_MoveAssign = [](void* A, void* B) { *static_cast<CppType*>(A) = std::move(*static_cast<CppType*>(B)); };
+		}
+		virtual void* GetNativeCallFuncPtr() { return &_NativeCall; }
+		FunctionType _NativeCall;
+	};
+
 }
 
 

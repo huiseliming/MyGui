@@ -33,13 +33,15 @@ namespace Core
 		TClass(const std::string& name = "")
 			: Class(name)
 		{
-			//_MemorySize = sizeof(CppType);
-			//_New = []() -> void* { return new CppType(); };
-			//_Delete = [](void* A) { delete static_cast<CppType*>(A); };
-			//_Constructor = [](void* A) { new (A) CppType(); };
-			//_Destructor = [](void* A) { ((const CppType*)(A))->~CppType(); };
-			//_CopyAssign = [](void* A, void* B) { *static_cast<CppType*>(A) = *static_cast<CppType*>(B); };
-			//_MoveAssign = [](void* A, void* B) { *static_cast<CppType*>(A) = std::move(*static_cast<CppType*>(B)); };
+			_MemorySize = sizeof(CppType);
+			_New = []() -> void* { return new CppType(); };
+			_Delete = [](void* A) { delete static_cast<CppType*>(A); };
+			_Constructor = [](void* A) { new (A) CppType(); };
+			_Destructor = [](void* A) { ((const CppType*)(A))->~CppType(); };
+			if constexpr (std::is_copy_assignable_v<CppType>)
+				_CopyAssign = [](void* A, void* B) { *static_cast<CppType*>(A) = *static_cast<CppType*>(B); };
+			if constexpr (std::is_move_assignable_v<CppType>)
+				_MoveAssign = [](void* A, void* B) { *static_cast<CppType*>(A) = std::move(*static_cast<CppType*>(B)); };
 		}
 	};
 
@@ -95,8 +97,10 @@ namespace Core
 	public:
 		
 		FUNCTION()
-		int TestAdd(int a, int b) { return a + b; }
-
+		int& TestAdd(int*& a/* dont support int* reference wrapper, so need to register int* type */, int& b) {
+			static int c = *a + b;
+			return c; 
+		}
 	};
 
 	MYGUI_API 
@@ -105,11 +109,8 @@ namespace Core
 	{
 		void operator()(Type* uninitialized_type);
 	};
-
 	// @test end
 }
-
-
 
 
 

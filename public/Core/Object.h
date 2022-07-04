@@ -1,5 +1,6 @@
 #pragma once
 #include <string>
+#include "Object.gen.h"
 
 #ifdef __RUN_CODE_GENERATOR__
 #define METADATA(...)  [[clang::annotate("meta" __VA_OPT__(", ") #__VA_ARGS__)]]// __attribute__((annotate("meta" __VA_OPT__(", ") #__VA_ARGS__)))
@@ -55,7 +56,9 @@ namespace Core
 		TE_6 METADATA(DisplayName = "测试6"),
 	};
 
-	template<> Enum* GetStaticEnum<ETestEnum>();
+#ifdef STATIC_ENUM_ETestEnum
+	STATIC_ENUM_ETestEnum
+#endif // STATIC_ENUM_ETestEnum
 
 	//MYGUI_API
 	//template<>

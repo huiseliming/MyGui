@@ -531,7 +531,7 @@ static TTypeAutoInitializer<{{name}}> S{{name}}AutoInitializer;
             CursorNodeLoop(translation_unit_client_data_ref, children_cursor_node);
 
             std::string enum_header_template = R"(
-#define STATIC_ENUM_{{name}} {{export_api_name}} template<> Enum* GetStaticEnum<{{name}}>();
+#define STATIC_ENUM_{{name}} {{export_api_name}} template<> extern Enum* GetStaticEnum<{{name}}>();
 )";
             children_cursor_node->_Data["export_api_name"] = ApiName;
             translation_unit_client_data_ref._GeneratedHeaderCode += inja::render(enum_header_template, children_cursor_node->_Data) + "\n";

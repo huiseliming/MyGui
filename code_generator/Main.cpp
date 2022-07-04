@@ -88,6 +88,13 @@ bool HasMetaAttribute(CXCursor in_cursor)
     return visit_data._HasMetaAttribute;
 }
 
+bool IsForwardDeclaration(CXCursor cursor)
+{
+    auto definition = clang_getCursorDefinition(cursor);
+    if (clang_equalCursors(definition, clang_getNullCursor()))
+        return true;
+    return !clang_equalCursors(cursor, definition);
+}
 
 CursorNode* CreateCursorNode(TranslationUnitClientData* translation_unit_client_data_ptr, CXCursor cursor, std::string& MetaAttributeString)
 {
@@ -293,6 +300,10 @@ int main(int ArgC, char* ArgV[])
                     case CXCursor_StructDecl:
                     case CXCursor_ClassDecl:
                     case CXCursor_EnumDecl:
+                        if (IsForwardDeclaration(current_cursor))
+                        {
+                            return CXChildVisit_Continue;
+                        }
                         if (visit_data._HasMetaAttribute)
                         {
                             current_cursor_node = CreateCursorNode(translation_unit_client_data_ptr, current_cursor, visit_data._MetaAttributeString);

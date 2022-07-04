@@ -9,7 +9,7 @@
 #define IMGUI_API MYGUI_API
 #define IMGUI_IMPL_API IMGUI_API
 #include "../third_party/imgui/imgui.h"
-
+#include "../third_party/imgui/misc/cpp/imgui_stdlib.h"
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 #include <vulkan/vulkan.hpp>
@@ -158,8 +158,12 @@ protected:
 
 	// Draw logic
 	void ImGui_Draw();
+	void ImGui_BeginDockSpace();
+	void ImGui_DrawWidget();
+	void ImGui_EndDockSpace();
 public:
-	std::vector<std::shared_ptr<GuiDrawObject>> _Drawables;
+	std::map<std::string, std::function<void()>> _ImGuiDrawFunctions;
+
 private:
 	// Tools
 	bool CheckValidationLayerSupport();

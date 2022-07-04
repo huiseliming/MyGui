@@ -47,7 +47,9 @@ set(ImGuiSource
     ${CMAKE_CURRENT_SOURCE_DIR}/third_party/imgui/imgui_demo.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/third_party/imgui/imgui_draw.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/third_party/imgui/imgui_tables.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/third_party/imgui/imgui_widgets.cpp)
+    ${CMAKE_CURRENT_SOURCE_DIR}/third_party/imgui/imgui_widgets.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/third_party/imgui/misc/cpp/imgui_stdlib.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/third_party/imgui/misc/cpp/imgui_stdlib.h)
 
 set(OriginalHeaders
     ${CMAKE_CURRENT_SOURCE_DIR}/public/Core/Class.h

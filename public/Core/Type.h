@@ -134,10 +134,6 @@ namespace Core
     MYGUI_API template<> Type* GetStaticType<std::unordered_map<int64_t, std::any>>();
     MYGUI_API template<> Type* GetStaticType<std::unordered_map<std::string, std::any>>();
 
-
-
-    template<typename T> Enum* GetStaticEnum() { return nullptr; }
-
     MYGUI_API std::unordered_map<std::string, Type*>& GetTypeNameMap();
     MYGUI_API extern std::unordered_map<std::string, Type*>& GTypeNameMap;
 

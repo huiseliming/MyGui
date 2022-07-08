@@ -2,143 +2,7 @@
 #include "VulkanGuiApplication.h"
 #include "Core/Class.h"
 #include "Core/Enum.h"
-
-namespace GUI
-{
-
-    ImGuiDataType MapToImGuiDataType(Core::ECastTypeFlagBits CastTypeFlagBits)
-    {
-        switch (CastTypeFlagBits)
-        {
-        case Core::ECastTypeFlagBits::CTFB_FloatBit: 
-            return ImGuiDataType_Float;
-        case Core::ECastTypeFlagBits::CTFB_DoubleBit: 
-            return ImGuiDataType_Double;
-        case Core::ECastTypeFlagBits::CTFB_SInt8Bit:
-            return ImGuiDataType_S8;
-        case Core::ECastTypeFlagBits::CTFB_SInt16Bit:
-            return ImGuiDataType_S16;
-        case Core::ECastTypeFlagBits::CTFB_SInt32Bit: 
-            return ImGuiDataType_S32;
-        case Core::ECastTypeFlagBits::CTFB_SInt64Bit: 
-            return ImGuiDataType_S64;
-        case Core::ECastTypeFlagBits::CTFB_UInt8Bit:
-            return ImGuiDataType_U8;
-        case Core::ECastTypeFlagBits::CTFB_UInt16Bit: 
-            return ImGuiDataType_U16;
-        case Core::ECastTypeFlagBits::CTFB_UInt32Bit: 
-            return ImGuiDataType_U32;
-        case Core::ECastTypeFlagBits::CTFB_UInt64Bit: 
-            return ImGuiDataType_U64;
-        default:
-            break;
-        }
-        return ImGuiDataType_COUNT;
-    }
-
-    class ObjectBrowserWidget
-    {
-    public:
-
-        void DrawWidget()
-        {
-            using namespace Core;
-            ImGui::Begin("ObjectBrowser");
-            if (_Object)
-            {
-                ImGui::Columns(2, "tree", true);
-
-                Class* object_class_ptr = _Object->GetClass();
-                auto& object_fields = object_class_ptr->GetFields();
-                for (size_t i = 0; i < object_fields.size(); i++)
-                {
-                    Field* object_field_ptr = object_fields[i].get();
-                    std::string label_name = object_field_ptr->GetName();
-                    ImGui::TextUnformatted(label_name.c_str());
-                    ImGui::NextColumn();
-                    std::string label_id = "##" + label_name;
-                    ImGui::PushItemWidth(-1);
-                    if (object_field_ptr->GetCastTypeFlag() & CTFB_BoolBit)
-                    {
-                        if (ImGui::Checkbox(label_id.c_str(), object_field_ptr->GetFieldDataPtrAs<bool>(_Object)))
-                        {
-                            spdlog::info("ImGui::Checkbox");
-                        }
-                        ImGui::NextColumn();
-                    }
-                    else if (object_field_ptr->GetCastTypeFlag() & (CTFB_IntBits | CTFB_FloatBits))
-                    {
-                        if (ImGui::InputScalar(label_id.c_str(), MapToImGuiDataType(ECastTypeFlagBits(object_field_ptr->GetCastTypeFlag())), object_field_ptr->GetFieldDataPtr(_Object)))
-                        {
-                            spdlog::info("ImGui::InputInt");
-                        }
-                        ImGui::NextColumn();
-                    }
-                    else if (object_field_ptr->GetCastTypeFlag() & CTFB_StringBit)
-                    {
-                        if (ImGui::InputText(label_id.c_str(), object_field_ptr->GetFieldDataPtrAs<std::string>(_Object)))
-                        {
-                            spdlog::info("ImGui::InputText");
-                        }
-                        ImGui::NextColumn();
-                    }
-                    else if (object_field_ptr->GetCastTypeFlag() & CTFB_EnumBit)
-                    {
-                        Core::Enum* field_enum_ptr = static_cast<Enum*>(object_field_ptr->GetType());
-                        static std::vector<const Core::EnumValue*> enum_value_vector = ([field_enum_ptr]() {
-                            auto& enum_value_map = field_enum_ptr->GetEnumValueMap();
-                            std::vector<const Core::EnumValue*> enum_value_vector;
-                            for (auto enum_value_map_iterator = enum_value_map.begin(); enum_value_map_iterator != enum_value_map.end(); enum_value_map_iterator++)
-                            {
-                                enum_value_vector.push_back(&(enum_value_map_iterator->second));
-                            }
-                            return enum_value_vector;
-                        })();
-                        static int item_current_idx = 0; // Here we store our selection data as an index.
-                        struct Funcs {
-                            static bool ItemGetter(void* data, int n, const char** out_str) {
-                                const Core::EnumValue** enum_values = (const Core::EnumValue**)data;
-                                *out_str = enum_values[n]->_DisplayName.c_str();
-                                return true;
-                            }
-                        };
-                        if (ImGui::Combo(label_id.c_str(), &item_current_idx, &Funcs::ItemGetter, enum_value_vector.data(), enum_value_vector.size()))
-                        {
-                            object_field_ptr->SetUInt(_Object, enum_value_vector[item_current_idx]->_Value);
-                            spdlog::info("ImGui::Combo {:d}", item_current_idx);
-                        }
-                        ImGui::NextColumn();
-                    }
-                    else if (object_field_ptr->GetCastTypeFlag() & Core::ECastTypeFlagBits::CTFB_VectorBit)
-                    {
-                        //auto& vector = *object_field_ptr->GetFieldDataPtrAs<std::vector<std::any>>(&_Object);
-                        //for (size_t i = 0; i < vector.size(); i++)
-                        //{
-                        //    if (Core::Type* type = Core::GetType(vector[i].type()))
-                        //    {
-                        //        ImGui::Text(type->GetName().c_str());
-                        //    }
-                        //    else
-                        //    {
-                        //        ImGui::Text("Empty");
-                        //    }
-                        //}
-                        //static int vector_size = 0;
-                        //if (ImGui::InputInt("vector_size", &vector_size))
-                        //{
-                        //    test_struct._Vector.resize(vector_size, 1);
-                        //}
-                    }
-                    ImGui::PopItemWidth();
-                }
-                ImGui::Columns(1);
-            }
-            ImGui::End();
-        }
-
-        Core::Object* _Object = nullptr;
-    };
-}
+#include "GUI/FieldBrowser.h"
 
 class MyApplication : public VulkanGuiApplication
 {
@@ -147,9 +11,9 @@ public:
     virtual int main(const std::vector<std::string>& args) override
     {
         static Core::TestObject test_object;
-        GUI::ObjectBrowserWidget object_browser_widget;
-        object_browser_widget._Object = &test_object;
-        _ImGuiDrawFunctions.insert_or_assign("ObjectBrowserWidget", std::bind(&GUI::ObjectBrowserWidget::DrawWidget, object_browser_widget));
+        GUI::FieldBrowser field_browser_widget;
+        field_browser_widget._Object = &test_object;
+        _ImGuiDrawFunctions.insert_or_assign("ObjectBrowserWidget", std::bind(&GUI::FieldBrowser::DrawWidget, field_browser_widget));
         _ImGuiDrawFunctions.insert_or_assign(
             "draw",
             []()

@@ -1,5 +1,7 @@
 #pragma once
+#include <any>
 #include <string>
+#include <vector>
 #include "Object.gen.h"
 
 #ifdef __RUN_CODE_GENERATOR__
@@ -67,6 +69,16 @@ namespace Core
 	//	void operator()(Type* initialized_type);
 	//};
 
+	class CLASS() TestObjectK : public Object
+	{
+		GENERATED_OBJECT_BODY()
+	public:
+		FIELD()
+		uint64_t _UInt64;
+		FIELD()
+		int64_t _SInt64;
+	};
+
 	class CLASS() TestObject : public Object
 	{
 		GENERATED_OBJECT_BODY()
@@ -83,6 +95,10 @@ namespace Core
 		ETestEnum _TestEnum;
 		FIELD()
 		std::string _String;
+		FIELD()
+		TestObjectK _TestObjectK;
+		FIELD()
+		std::vector<std::any> _AnyArray;
 	};
 
 }

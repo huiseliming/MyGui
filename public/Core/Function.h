@@ -35,13 +35,7 @@ namespace Core
 		TFunction(const std::string& name = "")
 			: Function(name)
 		{
-			_MemorySize = sizeof(CppType);
-			_New = []() -> void* { return new CppType(); };
-			_Delete = [](void* A) { delete static_cast<CppType*>(A); };
-			_Constructor = [](void* A) { new (A) CppType(); };
-			_Destructor = [](void* A) { ((const CppType*)(A))->~CppType(); };
-			_CopyAssign = [](void* A, void* B) { *static_cast<CppType*>(A) = *static_cast<CppType*>(B); };
-			_MoveAssign = [](void* A, void* B) { *static_cast<CppType*>(A) = std::move(*static_cast<CppType*>(B)); };
+			IMPL_DEFAULT_TYPE_BASE_FUNCTION(CppType)
 		}
 		virtual void* GetNativeCallFuncPtr() { return &_NativeCall; }
 		FunctionType _NativeCall;

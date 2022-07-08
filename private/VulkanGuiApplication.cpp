@@ -641,7 +641,7 @@ void VulkanGuiApplication::CreateSwapchain()
 		}
 	}
 	auto surface_capabilities = _PhysicalDevice.getSurfaceCapabilitiesKHR(_Surface);
-	if (surface_capabilities.currentExtent.width != std::numeric_limits<uint32_t>::max()) {
+	if (surface_capabilities.currentExtent.width != (std::numeric_limits<uint32_t>::max)()) {
 		_SurfaceExtent = surface_capabilities.currentExtent;
 	}
 	else {

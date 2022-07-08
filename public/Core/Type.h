@@ -2,6 +2,22 @@
 #include "Record.h"
 #include <spdlog/spdlog.h>
 
+#define IMPL_DEFAULT_TYPE_BASE_FUNCTION(CppType)                                                                                                             \
+_MemorySize  = sizeof(CppType);                                                                                                                              \
+_New         = []() -> void* { return new CppType(); };                                                                                                      \
+_Delete      = [](void* A) { delete static_cast<CppType*>(A); };                                                                                             \
+_Constructor = [](void* A) { new (A) CppType(); };                                                                                                           \
+_Destructor  = [](void* A) { ((const CppType*)(A))->~CppType(); };                                                                                           \
+if constexpr (std::is_copy_assignable_v<CppType>) _CopyAssign  = [](void* A, void* B) { *static_cast<CppType*>(A) = *static_cast<CppType*>(B); };            \
+if constexpr (std::is_move_assignable_v<CppType>) _MoveAssign  = [](void* A, void* B) { *static_cast<CppType*>(A) = std::move(*static_cast<CppType*>(B)); }; \
+
+#define IMPL_DEFAULT_TYPE_ANY_ACCESSOR_FUNCTION(CppType)                                    \
+if constexpr (std::is_copy_assignable_v<CppType>)                                           \
+{                                                                                           \
+    _GetAny = [](std::any& any_ref) -> void* { return std::any_cast<CppType>(&any_ref); };  \
+    _SetAny = [](std::any& any_ref, void* data_ptr) { any_ref = *(CppType*)data_ptr; };     \
+}                                                                                           \
+
 namespace Core
 {
 
@@ -63,12 +79,18 @@ namespace Core
         uint32_t GetCastTypeFlag() const { return _CastTypeFlag; }
         uint32_t GetMemorySize() const { return _MemorySize; }
 
-        void* New()                         { return _New(); }
-        void  Delete(void* A)               { _Delete(A); }
-        void  Constructor(void* A)          { _Constructor(A); }
-        void  Destructor(void* A)           { _Destructor(A); }
-        void  CopyAssign(void* A, void* B)  { _CopyAssign(A, B); }
-        void  MoveAssign(void* A, void* B)  { _MoveAssign(A, B); }
+        void* New() { return _New(); }
+        void  Delete(void* A) { _Delete(A); }
+        void  Constructor(void* A) { _Constructor(A); }
+        void  Destructor(void* A) { _Destructor(A); }
+        void  CopyAssign(void* A, void* B) { _CopyAssign(A, B); }
+        void  MoveAssign(void* A, void* B) { _MoveAssign(A, B); }
+        void* GetAny(std::any& any_ref) { return _GetAny(any_ref); }
+        void  SetAny(std::any& any_ref, void* data_ptr) { _SetAny(any_ref, data_ptr); }
+        template<typename T>
+        T& GetAnyAs(std::any& any_ref) { return *static_cast<T*>(GetAny(any_ref)); }
+        template<typename T>
+        void SetAnyBy(std::any& any_ref, T& data_ref) { return SetAny(any_ref, &data_ref); }
 
         virtual Type* GetPointToType() const { return nullptr; }
         virtual Type* GetWrappedType() const { return nullptr; }
@@ -77,12 +99,14 @@ namespace Core
 		uint32_t _CastTypeFlag;
 		uint32_t _MemorySize;
 
-		void* (*_New)        (            ) {nullptr};
-		void  (*_Delete)     (void*       ) {nullptr};
-		void  (*_Constructor)(void*       ) {nullptr};
-		void  (*_Destructor) (void*       ) {nullptr};
-		void  (*_CopyAssign) (void*, void*) {nullptr};
-		void  (*_MoveAssign) (void*, void*) {nullptr};
+        void* (*_New)() { nullptr };
+        void (*_Delete) (void*) { nullptr };
+        void (*_Constructor) (void*) { nullptr };
+        void (*_Destructor) (void*) { nullptr };
+        void (*_CopyAssign) (void*, void*) { nullptr };
+        void (*_MoveAssign) (void*, void*) { nullptr };
+        void* (*_GetAny) (std::any& any_ref) { nullptr };
+        void (*_SetAny) (std::any& any_ref, void* data_ptr) { nullptr };
     private:
         template<typename T> friend Type* GetType();
 	};
@@ -93,13 +117,8 @@ namespace Core
     public:
         TType(const std::string& name = "") : Type(name)
         {
-            _MemorySize = sizeof(CppType);
-            _New         = []() -> void* { return new CppType(); };
-            _Delete      = [](void* A) { delete static_cast<CppType*>(A); };
-            _Constructor = [](void* A) { new (A) CppType(); };
-            _Destructor  = [](void* A) { ((const CppType*)(A))->~CppType(); };
-            _CopyAssign  = [](void* A, void* B) { *static_cast<CppType*>(A) = *static_cast<CppType*>(B); };
-            _MoveAssign  = [](void* A, void* B) { *static_cast<CppType*>(A) = std::move(*static_cast<CppType*>(B)); };
+            IMPL_DEFAULT_TYPE_BASE_FUNCTION(CppType);
+            IMPL_DEFAULT_TYPE_ANY_ACCESSOR_FUNCTION(CppType);
         }
     };
 
@@ -134,16 +153,16 @@ namespace Core
     MYGUI_API template<> Type* GetStaticType<std::unordered_map<int64_t, std::any>>();
     MYGUI_API template<> Type* GetStaticType<std::unordered_map<std::string, std::any>>();
 
-    MYGUI_API std::unordered_map<std::string, Type*>& GetTypeNameMap();
-    MYGUI_API extern std::unordered_map<std::string, Type*>& GTypeNameMap;
-
-    MYGUI_API void AddTypeToNameMap(const std::string& type_name, Type* type_ptr);
+    MYGUI_API std::unordered_map<std::string, Class*>& GetClassNameMap();
+    MYGUI_API std::unordered_map<std::string, Enum*>& GetEnumNameMap();
+    MYGUI_API extern std::unordered_map<std::string, Class*>& global_class_name_map_ref;
+    MYGUI_API extern std::unordered_map<std::string, Enum*>& global_enum_name_map_ref;
 
     MYGUI_API Enum* FindEnum(const std::string& enum_name);
     MYGUI_API Class* FindClass(const std::string& class_name);
 
     MYGUI_API std::unordered_map<std::type_index, Type*>& GetTypeIndexMap();
-    MYGUI_API extern std::unordered_map<std::type_index, Type*>& GTypeIndexMap;
+    MYGUI_API extern std::unordered_map<std::type_index, Type*>& global_type_index_map;
 
     MYGUI_API Type* GetType(const std::type_info& type_info);
 
@@ -155,13 +174,8 @@ namespace Core
         PointerType(const std::string& name = "")
             : Type(name)
         {
-            _MemorySize = sizeof(CppType);
-            _New = []() -> void* { return new CppType(); };
-            _Delete = [](void* A) { delete static_cast<CppType*>(A); };
-            _Constructor = [](void* A) { new (A) CppType(); };
-            _Destructor = [](void* A) { ((const CppType*)(A))->~CppType(); };
-            _CopyAssign = [](void* A, void* B) { *static_cast<CppType*>(A) = *static_cast<CppType*>(B); };
-            _MoveAssign = [](void* A, void* B) { *static_cast<CppType*>(A) = std::move(*static_cast<CppType*>(B)); };
+            IMPL_DEFAULT_TYPE_BASE_FUNCTION(CppType)
+            IMPL_DEFAULT_TYPE_ANY_ACCESSOR_FUNCTION(CppType)
         }
 
         virtual Type* GetPointToType() const override { return _PointToType; }
@@ -174,7 +188,6 @@ namespace Core
     MYGUI_API std::vector<std::unique_ptr<PointerType>>& GetStaticPointerTypes();
     MYGUI_API std::unordered_map<std::type_index, PointerType*>& GetUninitializePointerTypeMap();
     MYGUI_API std::unordered_map<std::type_index, Type*>& GetPointerTypePointToTypeIndexMap();
-
 
     template<typename T>
     struct IsReflectClassType
@@ -231,6 +244,9 @@ namespace Core
             _Destructor = [](void* A) { ((const CppType*)(A))->~CppType(); };
             _CopyAssign = [](void* A, void* B) { *static_cast<CppType*>(A) = *static_cast<CppType*>(B); };
             _MoveAssign = [](void* A, void* B) { *static_cast<CppType*>(A) = std::move(*static_cast<CppType*>(B)); };
+            _GetAny = [](std::any& any_ref) -> void* { return std::any_cast<CppType*>(&any_ref); };
+            _SetAny = [](std::any& any_ref, void* data_ptr) { any_ref = *(CppType*)data_ptr; };
+
         }
     };
 
@@ -316,11 +332,13 @@ namespace Core
         {
             return_type = T::StaticClass();
             return_type->_CastTypeFlag = ECastTypeFlagBits::CTFB_ClassBit;
+            GetClassNameMap().insert_or_assign(return_type->GetName(), static_cast<Class*>(return_type));
         }
         else if constexpr (std::is_enum_v<T>)
         {
             return_type = GetStaticEnum<T>();
             return_type->_CastTypeFlag = ECastTypeFlagBits::CTFB_EnumBit;
+            GetEnumNameMap().insert_or_assign(return_type->GetName(), static_cast<Enum*>(return_type));
         }
         else if constexpr (std::is_same_v<T, std::vector<std::any>>)
         {
@@ -385,7 +403,6 @@ namespace Core
                 uninitialize_reference_wrapper_type_map_ref.erase(uninitialize_reference_wrapper_type_map_iterator);
             }
         }
-
         type_index_map_ref[type_index] = return_type;
         return return_type;
     }

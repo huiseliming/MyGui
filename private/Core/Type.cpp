@@ -40,27 +40,29 @@ namespace Core
 	GET_STATIC_TYPE_FUNCTION_IMPL(Int64UnorderedMap , Int64UnorderedMap)
 	GET_STATIC_TYPE_FUNCTION_IMPL(StringUnorderedMap, StringUnorderedMap)
 
-	std::unordered_map<std::string, Type*>& GetTypeNameMap()
+	std::unordered_map<std::string, Class*>& GetClassNameMap()
 	{
-		static std::unordered_map<std::string, Type*> static_type_name_map;
-		return static_type_name_map;
+		static std::unordered_map<std::string, Class*> static_class_name_map;
+		return static_class_name_map;
 	}
-	std::unordered_map<std::string, Type*>& GTypeNameMap = GetTypeNameMap();
 
-	void AddTypeToNameMap(const std::string& type_name, Type* type_ptr)
+	std::unordered_map<std::string, Enum*>& GetEnumNameMap()
 	{
-		std::unordered_map<std::string, Type*>& type_name_map_ref = GetTypeNameMap();
-		assert(type_name_map_ref.insert(std::pair(type_name, type_ptr)).second);
+		static std::unordered_map<std::string, Enum*> static_enum_name_map;
+		return static_enum_name_map;
 	}
+
+	std::unordered_map<std::string, Class*>& global_class_name_map_ref = GetClassNameMap();
+	std::unordered_map<std::string, Enum*>& global_enum_name_map_ref = GetEnumNameMap();
 
 	Enum* FindEnum(const std::string& enum_name)
 	{
-		auto type_name_map_iterator = GTypeNameMap.find(enum_name);
-		if (type_name_map_iterator != GTypeNameMap.end())
+		auto enum_name_map_iterator = global_enum_name_map_ref.find(enum_name);
+		if (enum_name_map_iterator != global_enum_name_map_ref.end())
 		{
-			if (type_name_map_iterator->second->GetCastTypeFlag() & CTFB_EnumBit)
+			if (enum_name_map_iterator->second->GetCastTypeFlag() & CTFB_EnumBit)
 			{
-				return static_cast<Enum*>(type_name_map_iterator->second);
+				return static_cast<Enum*>(enum_name_map_iterator->second);
 			}
 		}
 		return nullptr;
@@ -68,12 +70,12 @@ namespace Core
 
 	Class* FindClass(const std::string& class_name)
 	{
-		auto type_name_map_iterator = GTypeNameMap.find(class_name);
-		if (type_name_map_iterator != GTypeNameMap.end())
+		auto class_name_map_iterator = global_class_name_map_ref.find(class_name);
+		if (class_name_map_iterator != global_class_name_map_ref.end())
 		{
-			if (type_name_map_iterator->second->GetCastTypeFlag() & CTFB_ClassBit)
+			if (class_name_map_iterator->second->GetCastTypeFlag() & CTFB_ClassBit)
 			{
-				return static_cast<Class*>(type_name_map_iterator->second);
+				return static_cast<Class*>(class_name_map_iterator->second);
 			}
 		}
 		return nullptr;
@@ -84,7 +86,7 @@ namespace Core
 		static std::unordered_map<std::type_index, Type*> static_type_index_map;
 		return static_type_index_map;
 	}
-	std::unordered_map<std::type_index, Type*>& GTypeIndexMap = GetTypeIndexMap();
+	std::unordered_map<std::type_index, Type*>& global_type_index_map = GetTypeIndexMap();
 
 	Type* GetType(const std::type_info& type_info)
 	{

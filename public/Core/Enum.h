@@ -33,6 +33,11 @@ namespace Core
 
 		const std::map<uint64_t, EnumValue>& GetEnumValueMap() { return _EnumValueMap; }
 
+		virtual void SetEnumValue(void* type_instance_ptr, uint64_t value) const {}
+		virtual void SetEnumValue(void* type_instance_ptr, int64_t value) const {}
+		virtual int64_t GetSIntEnumValue(void* type_instance_ptr) const { return 0; }
+		virtual uint64_t GetUIntEnumValue(void* type_instance_ptr) const { return 0; }
+
 	protected:
 		std::map<uint64_t, EnumValue> _EnumValueMap;
 
@@ -48,14 +53,27 @@ namespace Core
 		TEnum(const std::string& name = "")
 			: Enum(name)
 		{
-			_MemorySize = sizeof(CppType);
-			_New = []() -> void* { return new CppType(); };
-			_Delete = [](void* A) { delete static_cast<CppType*>(A); };
-			_Constructor = [](void* A) { new (A) CppType(); };
-			_Destructor = [](void* A) { ((const CppType*)(A))->~CppType(); };
-			_CopyAssign = [](void* A, void* B) { *static_cast<CppType*>(A) = *static_cast<CppType*>(B); };
-			_MoveAssign = [](void* A, void* B) { *static_cast<CppType*>(A) = std::move(*static_cast<CppType*>(B)); };
+			IMPL_DEFAULT_TYPE_BASE_FUNCTION(CppType)
+			IMPL_DEFAULT_TYPE_ANY_ACCESSOR_FUNCTION(CppType)
 		}
+		
+		virtual void SetEnumValue(void* type_instance_ptr, uint64_t value) const override
+		{
+			*static_cast<CppType*>(type_instance_ptr) = static_cast<CppType>(value);
+		}
+		virtual void SetEnumValue(void* type_instance_ptr, int64_t value) const override 
+		{
+			*static_cast<CppType*>(type_instance_ptr) = static_cast<CppType>(value);
+		}
+		virtual int64_t GetSIntEnumValue(void* type_instance_ptr) const override 
+		{
+			return static_cast<int64_t>(*static_cast<CppType*>(type_instance_ptr));
+		}
+		virtual uint64_t GetUIntEnumValue(void* type_instance_ptr) const override 
+		{
+			return static_cast<uint64_t>(*static_cast<CppType*>(type_instance_ptr));
+		}
+
 	};
 
 	// @test end

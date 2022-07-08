@@ -453,10 +453,9 @@ struct TDefaultTypeInitializer<{{name}}>
     void operator()(Type* uninitialized_type)
     {
         Class* uninitialized_class = static_cast<Class*>(uninitialized_type);
-        AddTypeToNameMap("{{namespace}}::{{name}}", uninitialized_class);
 
 ## for parent_class in parent_classes
-        {% if parent_class.is_reflect_class %}uninitialized_class->_ParentClasses.push_back({{parent_class.name}}::StaticClass());{% else %}uninitialized_class->_ParentClasses.push_back(nullptr);{% endif %}
+        {% if parent_class.is_reflect_class %}uninitialized_class->AddParentClass({{parent_class.name}}::StaticClass());{% else %}uninitialized_class->AddParentClass(nullptr);{% endif %}
 ## endfor
 {% for key, value in attributes %}
         uninitialized_class->_AttributeMap.insert(std::make_pair("{{key}}", std::any({{value}})));{% endfor %}
@@ -544,7 +543,6 @@ struct TDefaultTypeInitializer<{{name}}>
     void operator()(Type* uninitialized_type)
     {
         Enum* uninitialized_enum = static_cast<Enum*>(uninitialized_type);
-        AddTypeToNameMap("{{namespace}}::{{name}}", uninitialized_enum);
 ## for enum_constant in enum_constants
         uninitialized_enum->_EnumValueMap.insert(std::make_pair({{name}}::{{enum_constant.name}}, EnumValue{ {{name}}::{{enum_constant.name}}, "{{enum_constant.name}}", "{{enum_constant.display_name}}" }));
 ## endfor

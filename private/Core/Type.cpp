@@ -55,6 +55,19 @@ namespace Core
 	std::unordered_map<std::string, Class*>& global_class_name_map_ref = GetClassNameMap();
 	std::unordered_map<std::string, Enum*>& global_enum_name_map_ref = GetEnumNameMap();
 
+	std::vector<Class*> GetRootClasses()
+	{
+		std::vector<Class*> root_classes;
+		for (auto class_name_map_iterator : global_class_name_map_ref)
+		{
+			if (!class_name_map_iterator.second->GetFirstParentClass())
+			{
+				root_classes.push_back(class_name_map_iterator.second);
+			}
+		}
+		return root_classes;
+	}
+
 	Enum* FindEnum(const std::string& enum_name)
 	{
 		auto enum_name_map_iterator = global_enum_name_map_ref.find(enum_name);
@@ -175,3 +188,5 @@ namespace Core
 		}
 	} SSimpleStaticTypeAutoInitializer;
 }
+
+

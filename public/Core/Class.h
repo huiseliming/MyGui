@@ -15,13 +15,13 @@ namespace Core
 		const std::vector<Class*>& GetParentClasses() { return _ParentClasses; }
 		const Class* GetFirstParentClass() { return _ParentClasses.empty() ? nullptr : _ParentClasses[0]; }
 
-		const std::vector<Class*>& GetChildrenClasses() { return _ChildrenClasses; }
+		const std::vector<Class*>& GetChildClasses() { return _ChildClasses; }
 
 		const std::vector<std::unique_ptr<Function>>& GetFunctions() { return _Functions; }
 
 	protected:
 		std::vector<Class*> _ParentClasses;
-		std::vector<Class*> _ChildrenClasses;
+		std::vector<Class*> _ChildClasses;
 		std::vector<std::unique_ptr<Function>> _Functions;
 
 	private:
@@ -29,7 +29,7 @@ namespace Core
 		{
 			if (_ParentClasses.empty() && in_class)
 			{
-				in_class->_ChildrenClasses.push_back(this);
+				in_class->_ChildClasses.push_back(this);
 			}
 			_ParentClasses.push_back(in_class);
 		}

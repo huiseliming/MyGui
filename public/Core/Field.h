@@ -3,13 +3,13 @@
 
 namespace Core
 {
-	enum EFieldFlagBits : uint32_t
-	{
-		FFB_NoFlag = 0ULL,
-		FFB_LValueRefBit = 1ULL << 1,
-		FFB_RValueRefBit = 1ULL << 2,
-		FFB_RValueRefBits = FFB_LValueRefBit | FFB_RValueRefBit,
-	};
+	//enum EFieldFlagBits : uint32_t
+	//{
+	//	FFB_NoFlag = 0ULL,
+	//	FFB_LValueRefBit = 1ULL << 1,
+	//	FFB_RValueRefBit = 1ULL << 2,
+	//	FFB_RValueRefBits = FFB_LValueRefBit | FFB_RValueRefBit,
+	//};
 
 	class MYGUI_API CLASS() Field : public Record
 	{

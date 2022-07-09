@@ -14,10 +14,12 @@ namespace Core
 			: Struct(name)
 		{}
 
+
 		virtual void* GetNativeCallFuncPtr() { return nullptr; }
 		template<typename T>
 		T* GetNativeCallFuncPtrAs() { return static_cast<T*>(GetNativeCallFuncPtr()); }
 
+		void Invoke(void* in_object, void* in_script_struct) { _VMCall(in_object, in_script_struct); }
 		VMCall GetVMCallFuncPtr() { return _VMCall; }
 
 	private:

@@ -158,6 +158,8 @@ namespace Core
     MYGUI_API extern std::unordered_map<std::string, Class*>& global_class_name_map_ref;
     MYGUI_API extern std::unordered_map<std::string, Enum*>& global_enum_name_map_ref;
 
+    MYGUI_API std::vector<Class*> GetRootClasses();
+
     MYGUI_API Enum* FindEnum(const std::string& enum_name);
     MYGUI_API Class* FindClass(const std::string& class_name);
 

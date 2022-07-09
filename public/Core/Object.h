@@ -2,7 +2,6 @@
 #include <any>
 #include <string>
 #include <vector>
-#include "Object.gen.h"
 
 #ifdef __RUN_CODE_GENERATOR__
 #define METADATA(...)  [[clang::annotate("meta" __VA_OPT__(", ") #__VA_ARGS__)]]// __attribute__((annotate("meta" __VA_OPT__(", ") #__VA_ARGS__)))
@@ -21,8 +20,8 @@
 
 #define GENERATED_CLASS_BODY()                              \
 private:													\
-template<typename T> friend struct TCustomTypeModifier;	\
-template<typename T> friend struct TDefaultTypeInitializer;\
+template<typename T> friend struct TCustomTypeModifier;	    \
+template<typename T> friend struct TDefaultTypeInitializer; \
 public:														\
 	static Class* StaticClass();							\
 public:														\
@@ -57,7 +56,6 @@ namespace Core
 		TE_5 METADATA(DisplayName = TestFive),
 		TE_6 METADATA(DisplayName = "测试6"),
 	};
-
 #ifdef STATIC_ENUM_ETestEnum
 	STATIC_ENUM_ETestEnum
 #endif // STATIC_ENUM_ETestEnum

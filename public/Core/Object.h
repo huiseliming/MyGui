@@ -2,6 +2,7 @@
 #include <any>
 #include <string>
 #include <vector>
+#include "Object.gen.h"
 
 #ifdef __RUN_CODE_GENERATOR__
 #define METADATA(...)  [[clang::annotate("meta" __VA_OPT__(", ") #__VA_ARGS__)]]// __attribute__((annotate("meta" __VA_OPT__(", ") #__VA_ARGS__)))

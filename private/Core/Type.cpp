@@ -24,6 +24,8 @@ namespace Core
 	GET_STATIC_TYPE_FUNCTION_IMPL(uint64_t   , UInt64)
 	GET_STATIC_TYPE_FUNCTION_IMPL(std::string, String)
 
+	using Vector = std::vector<std::any>;
+
 	GET_STATIC_TYPE_FUNCTION_IMPL(std::vector<std::any>, Vector)
 
 	using PtrMap             = std::map<void*, std::any>;

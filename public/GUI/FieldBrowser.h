@@ -92,7 +92,7 @@ namespace GUI
             ImGui::PopItemWidth();
         }
 
-        void DisplaySimpleTypeRow(const std::string& row_name, void* type_instance_ptr, Core::Type* type_ptr)
+        void DisplaySimpleTypeRow(const std::string& row_name, void* type_instance_ptr, Core::Type* type_ptr, bool is_any = false)
         {
             using namespace Core;
             ImGui::TableNextRow();
@@ -162,9 +162,17 @@ namespace GUI
             }
             ImGui::PopItemWidth();
             ImGui::TableNextColumn();
+            if (is_any)
+            {
+
+            }
+            else
+            {
+                ImGui::TextUnformatted(type_ptr->GetName().c_str());
+            }
         }
 
-        void DisplayClassInstanceRow(const std::string& row_name, void* type_instance_ptr, Core::Type* type_ptr)
+        void DisplayClassInstanceRow(const std::string& row_name, void* type_instance_ptr, Core::Type* type_ptr, bool is_any = false)
         {
             using namespace Core;
             ImGui::TableNextRow();
@@ -173,9 +181,13 @@ namespace GUI
             ImGui::TableNextColumn();
             ImGui::Text("%s[0x%x]", type_ptr->GetName().c_str(), type_instance_ptr);
             ImGui::TableNextColumn();
-            if (ImGui::Button("r"))
+            if (is_any)
             {
 
+            }
+            else
+            {
+                ImGui::TextUnformatted(type_ptr->GetName().c_str());
             }
             if (open)
             {
@@ -190,6 +202,89 @@ namespace GUI
             }
         }
 
+        bool TypeSelectorCombox(Core::Type*& selected_type)
+        {
+            using namespace Core;
+            ImGui::PushItemWidth(-1);
+            bool select_changed = ImGui::BeginCombo("class_selector", selected_type ? selected_type->GetName().c_str() : "");
+            if (select_changed)
+            {
+                static std::vector<Type*> cpp_base_types = { GetType<bool>(), GetType<int>() ,GetType<float>() };
+                static ImGuiTreeNodeFlags base_flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_SpanAvailWidth;
+                for (size_t i = 0; i < cpp_base_types.size(); i++)
+                {
+                    ImGuiTreeNodeFlags node_flag = ImGuiTreeNodeFlags_FramePadding;
+                    node_flag |= ImGuiTreeNodeFlags_Bullet;
+                    bool is_expanded = ImGui::TreeNodeExV((void*)cpp_base_types[i], node_flag, "", nullptr);
+                    ImGui::SameLine();
+                    const bool is_selected = (cpp_base_types[i] == selected_type);
+                    if (ImGui::Selectable(cpp_base_types[i]->GetName().c_str(), is_selected))
+                    {
+                        selected_type = cpp_base_types[i];
+                    }
+                    if (is_selected)
+                        ImGui::SetItemDefaultFocus();
+                    if (is_expanded)
+                        ImGui::TreePop();
+                }
+                for (auto enum_name_map_iterator : global_enum_name_map_ref)
+                {
+                    ImGuiTreeNodeFlags node_flag = ImGuiTreeNodeFlags_FramePadding;
+                    node_flag |= ImGuiTreeNodeFlags_Bullet;
+                    bool is_expanded = ImGui::TreeNodeExV((void*)enum_name_map_iterator.second, node_flag, "", nullptr);
+                    ImGui::SameLine();
+                    const bool is_selected = (enum_name_map_iterator.second == selected_type);
+                    if (ImGui::Selectable(enum_name_map_iterator.second->GetName().c_str(), is_selected))
+                    {
+                        selected_type = enum_name_map_iterator.second;
+                    }
+                    if (is_selected)
+                        ImGui::SetItemDefaultFocus();
+                    if (is_expanded)
+                        ImGui::TreePop();
+                }
+                struct ClassTree {
+                    static void MakeNode(Class* in_class, Core::Type*& selected_type)
+                    {
+                        ImGuiTreeNodeFlags node_flag = ImGuiTreeNodeFlags_FramePadding;
+                        bool exist_child_classes = !in_class->GetChildClasses().empty();
+                        if (!exist_child_classes)
+                        {
+                            node_flag |= ImGuiTreeNodeFlags_Bullet;
+                        }
+                        bool is_expanded = ImGui::TreeNodeExV((void*)in_class, node_flag, "", nullptr);
+                        ImGui::SameLine();
+                        const bool is_selected = (in_class == selected_type);
+                        if (ImGui::Selectable(in_class->GetName().c_str(), is_selected))
+                        {
+                            selected_type = in_class;
+                        }
+                        if (is_selected)
+                            ImGui::SetItemDefaultFocus();
+                        if (is_expanded) {
+                            if (!in_class->GetChildClasses().empty())
+                            {
+                                auto& child_classes = in_class->GetChildClasses();
+                                for (size_t i = 0; i < child_classes.size(); i++)
+                                {
+                                    Class* child_class = child_classes[i];
+                                    MakeNode(child_class, selected_type);
+                                }
+                            }
+                            ImGui::TreePop();
+                        }
+                    }
+                };
+                for (auto class_ptr : GetRootClasses())
+                {
+                    ClassTree::MakeNode(class_ptr, selected_type);
+                }
+                ImGui::EndCombo();
+            }
+            ImGui::PopItemWidth();
+            return select_changed;
+        }
+
         void DisplayVectorRow(const std::string& row_name, void* type_instance_ptr, Core::Type* type_ptr)
         {
             using namespace Core;
@@ -199,59 +294,10 @@ namespace GUI
             bool open = ImGui::TreeNodeEx(row_name.c_str(), ImGuiTreeNodeFlags_SpanFullWidth);
             ImGui::TableNextColumn();
             //auto& any_vector = *field_ptr->GetFieldDataPtrAs<std::vector<std::any>>(instance_ptr);
-            static int selected_index = 0;
             static Type* selected_type = nullptr;
-            static std::vector<Type*> cpp_base_types = { GetType<bool>(), GetType<int>() ,GetType<float>() };
-            if (ImGui::BeginCombo("class_selector", selected_type ? selected_type->GetName().c_str() : ""))
-            {
-                static ImGuiTreeNodeFlags base_flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_SpanAvailWidth;
-                int n = 0;
-                //for (size_t i = 0; i < cpp_base_types.size(); i++)
-                //{
-                //    ImGuiTreeNodeFlags node_flags = base_flags;
-                //    const bool is_selected = selected_index == n;
-                //    if (is_selected)
-                //        node_flags |= ImGuiTreeNodeFlags_Selected;
-                //    node_flags |= ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen; // ImGuiTreeNodeFlags_Bullet
-                //    bool node_open = ImGui::TreeNodeEx((void*)(intptr_t)n, node_flags, cpp_base_types[i]->GetName().c_str());
-                //    if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen())
-                //        selected_index = n;
-                //    n++;
-                //}
-                //for (auto enum_name_map_iterator : global_enum_name_map_ref)
-                //{
-                //    ImGuiTreeNodeFlags node_flags = base_flags;
-                //    const bool is_selected = selected_index == n;
-                //    if (is_selected)
-                //        node_flags |= ImGuiTreeNodeFlags_Selected;
-                //    node_flags |= ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen; // ImGuiTreeNodeFlags_Bullet
-                //    bool node_open = ImGui::TreeNodeEx((void*)(intptr_t)n, node_flags, enum_name_map_iterator.second->GetName().c_str());
-                //    if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen())
-                //        selected_index = n;
-                //    n++;
-                //}
-                for (auto class_name_map_iterator : global_class_name_map_ref)
-                {
-                    const bool is_selected = (selected_index == n);
-                    ImGui::Indent();
-                    ImGui::Button("A");
-                    ImGui::SameLine();
-                    if (ImGui::Selectable(class_name_map_iterator.second->GetName().c_str(), is_selected))
-                        selected_index = n;
-
-                    // Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
-                    if (is_selected)
-                        ImGui::SetItemDefaultFocus();
-
-                    ImGui::Unindent();
-                }
-                ImGui::EndCombo();
-            }
+            TypeSelectorCombox(selected_type);
             ImGui::TableNextColumn();
-            if (ImGui::Button("r"))
-            {
-                any_vector.push_back(1);
-            }
+            ImGui::TextUnformatted(type_ptr->GetName().c_str());
             if (open)
             {
                 for (size_t i = 0; i < any_vector.size(); i++)
@@ -274,7 +320,7 @@ namespace GUI
                 if (type_ptr)
                 {
                     void* data_ptr = type_ptr->GetAny(any_ref);
-                    DisplayRow(row_name, data_ptr, type_ptr);
+                    DisplayRow(row_name, data_ptr, type_ptr, true);
                 }
                 else
                 {
@@ -297,7 +343,7 @@ namespace GUI
             }
         }
 
-        void DisplayRow(const std::string& row_name, void* type_instance_ptr, Core::Type* type_ptr)
+        void DisplayRow(const std::string& row_name, void* type_instance_ptr, Core::Type* type_ptr, bool is_any = false)
         {
             using namespace Core;
             ECastTypeFlagBits cast_type_flag = ECastTypeFlagBits(type_ptr->GetCastTypeFlag());
@@ -320,10 +366,10 @@ namespace GUI
             case Core::CTFB_UInt64Bit:
             case Core::CTFB_StringBit:
             case Core::CTFB_EnumBit:
-                DisplaySimpleTypeRow(row_name, type_instance_ptr, type_ptr);
+                DisplaySimpleTypeRow(row_name, type_instance_ptr, type_ptr, is_any);
                 break;
             case Core::CTFB_ClassBit:
-                DisplayClassInstanceRow(row_name, type_instance_ptr, type_ptr);
+                DisplayClassInstanceRow(row_name, type_instance_ptr, type_ptr, is_any);
                 break;
             case Core::CTFB_VectorBit:
                 DisplayVectorRow(row_name, type_instance_ptr, type_ptr);
@@ -415,8 +461,8 @@ namespace GUI
                 const float TEXT_BASE_WIDTH = ImGui::CalcTextSize("A").x;
                 // The first column will use the default _WidthStretch when ScrollX is Off and _WidthFixed when ScrollX is On
                 ImGui::TableSetupColumn("field", ImGuiTableColumnFlags_WidthFixed, TEXT_BASE_WIDTH * 12.0f);
-                ImGui::TableSetupColumn("modifier", ImGuiTableColumnFlags_NoHide);
-                ImGui::TableSetupColumn("action", ImGuiTableColumnFlags_WidthFixed, TEXT_BASE_WIDTH * 9.0f);
+                ImGui::TableSetupColumn("value", ImGuiTableColumnFlags_NoHide);
+                ImGui::TableSetupColumn("type", ImGuiTableColumnFlags_WidthFixed, TEXT_BASE_WIDTH * 9.0f);
                 ImGui::TableHeadersRow();
                 if (_Object)
                 {

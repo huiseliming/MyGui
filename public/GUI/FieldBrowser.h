@@ -199,28 +199,53 @@ namespace GUI
             bool open = ImGui::TreeNodeEx(row_name.c_str(), ImGuiTreeNodeFlags_SpanFullWidth);
             ImGui::TableNextColumn();
             //auto& any_vector = *field_ptr->GetFieldDataPtrAs<std::vector<std::any>>(instance_ptr);
+            static int selected_index = 0;
+            static Type* selected_type = nullptr;
+            static std::vector<Type*> cpp_base_types = { GetType<bool>(), GetType<int>() ,GetType<float>() };
+            if (ImGui::BeginCombo("class_selector", selected_type ? selected_type->GetName().c_str() : ""))
             {
-                static int selected_index = 0;
-                static Type* selected_type = nullptr;
-                static std::vector<Type*> cpp_base_types = { GetType<bool>(), GetType<int>() ,GetType<float>() };
-                if (ImGui::BeginCombo(row_name.c_str(), selected_type ? selected_type->GetName().c_str() : ""))
+                static ImGuiTreeNodeFlags base_flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_SpanAvailWidth;
+                int n = 0;
+                //for (size_t i = 0; i < cpp_base_types.size(); i++)
+                //{
+                //    ImGuiTreeNodeFlags node_flags = base_flags;
+                //    const bool is_selected = selected_index == n;
+                //    if (is_selected)
+                //        node_flags |= ImGuiTreeNodeFlags_Selected;
+                //    node_flags |= ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen; // ImGuiTreeNodeFlags_Bullet
+                //    bool node_open = ImGui::TreeNodeEx((void*)(intptr_t)n, node_flags, cpp_base_types[i]->GetName().c_str());
+                //    if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen())
+                //        selected_index = n;
+                //    n++;
+                //}
+                //for (auto enum_name_map_iterator : global_enum_name_map_ref)
+                //{
+                //    ImGuiTreeNodeFlags node_flags = base_flags;
+                //    const bool is_selected = selected_index == n;
+                //    if (is_selected)
+                //        node_flags |= ImGuiTreeNodeFlags_Selected;
+                //    node_flags |= ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen; // ImGuiTreeNodeFlags_Bullet
+                //    bool node_open = ImGui::TreeNodeEx((void*)(intptr_t)n, node_flags, enum_name_map_iterator.second->GetName().c_str());
+                //    if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen())
+                //        selected_index = n;
+                //    n++;
+                //}
+                for (auto class_name_map_iterator : global_class_name_map_ref)
                 {
-                    int n = 0;
-                    for (size_t i = 0; i < cpp_base_types.size(); i++)
-                    {
-                        const bool is_selected = (selected_index == n);
-                        if (ImGui::Selectable(cpp_base_types[i]->GetName().c_str(), is_selected))
-                        {
-                            selected_index = n;
-                        }
+                    const bool is_selected = (selected_index == n);
+                    ImGui::Indent();
+                    ImGui::Button("A");
+                    ImGui::SameLine();
+                    if (ImGui::Selectable(class_name_map_iterator.second->GetName().c_str(), is_selected))
+                        selected_index = n;
 
-                        // Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
-                        if (is_selected)
-                            ImGui::SetItemDefaultFocus();
-                        n++;
-                    }
-                    ImGui::EndCombo();
+                    // Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
+                    if (is_selected)
+                        ImGui::SetItemDefaultFocus();
+
+                    ImGui::Unindent();
                 }
+                ImGui::EndCombo();
             }
             ImGui::TableNextColumn();
             if (ImGui::Button("r"))
@@ -245,6 +270,7 @@ namespace GUI
             if (any_ref.has_value())
             {
                 Type* type_ptr = GetType(any_ref.type());
+
                 if (type_ptr)
                 {
                     void* data_ptr = type_ptr->GetAny(any_ref);

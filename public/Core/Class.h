@@ -15,6 +15,8 @@ namespace Core
 		const std::vector<Class*>& GetParentClasses() { return _ParentClasses; }
 		const Class* GetFirstParentClass() { return _ParentClasses.empty() ? nullptr : _ParentClasses[0]; }
 
+		const std::vector<Class*>& GetChildrenClasses() { return _ChildrenClasses; }
+
 		const std::vector<std::unique_ptr<Function>>& GetFunctions() { return _Functions; }
 
 	protected:

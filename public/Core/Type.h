@@ -11,12 +11,12 @@ _Destructor  = [](void* A) { ((const CppType*)(A))->~CppType(); };              
 if constexpr (std::is_copy_assignable_v<CppType>) _CopyAssign  = [](void* A, void* B) { *static_cast<CppType*>(A) = *static_cast<CppType*>(B); };            \
 if constexpr (std::is_move_assignable_v<CppType>) _MoveAssign  = [](void* A, void* B) { *static_cast<CppType*>(A) = std::move(*static_cast<CppType*>(B)); }; \
 
-#define IMPL_DEFAULT_TYPE_ANY_ACCESSOR_FUNCTION(CppType)                                    \
-if constexpr (std::is_copy_assignable_v<CppType>)                                           \
-{                                                                                           \
-    _GetAny = [](std::any& any_ref) -> void* { return std::any_cast<CppType>(&any_ref); };  \
-    _SetAny = [](std::any& any_ref, void* data_ptr) { any_ref = *(CppType*)data_ptr; };     \
-}                                                                                           \
+#define IMPL_DEFAULT_TYPE_ANY_ACCESSOR_FUNCTION(CppType)                                   \
+if constexpr (std::is_copy_assignable_v<CppType>)                                          \
+{                                                                                          \
+    _GetAny = [](std::any& any_ref) -> void* { return std::any_cast<CppType>(&any_ref); }; \
+    _SetAny = [](std::any& any_ref, void* data_ptr) { any_ref = *(CppType*)data_ptr; };    \
+}                                                                                          \
 
 namespace Core
 {
@@ -39,6 +39,7 @@ namespace Core
         CTFB_StringBit = 1ULL << 12,
         CTFB_EnumBit = 1ULL << 13,
         CTFB_ClassBit = 1ULL << 14,
+        CTFB_AnyBit = 1ULL << 15,
         CTFB_VectorBit = 1ULL << 16,
         CTFB_PtrMapBit = 1ULL << 17,
         CTFB_Int64MapBit = 1ULL << 18,
@@ -78,6 +79,9 @@ namespace Core
 
         uint32_t GetCastTypeFlag() const { return _CastTypeFlag; }
         uint32_t GetMemorySize() const { return _MemorySize; }
+        void* GetDefault() { return _DefaultPtr; }
+
+        bool IsCopyAssignable() { return _CopyAssign != nullptr; }
 
         void* New() { return _New(); }
         void  Delete(void* A) { _Delete(A); }
@@ -98,6 +102,7 @@ namespace Core
 	protected:
 		uint32_t _CastTypeFlag;
 		uint32_t _MemorySize;
+        void* _DefaultPtr{ nullptr };
 
         void* (*_New)() { nullptr };
         void (*_Delete) (void*) { nullptr };
@@ -119,7 +124,10 @@ namespace Core
         {
             IMPL_DEFAULT_TYPE_BASE_FUNCTION(CppType);
             IMPL_DEFAULT_TYPE_ANY_ACCESSOR_FUNCTION(CppType);
+            _DefaultPtr = &_Default;
         }
+    protected:
+        CppType _Default;
     };
 
     template<typename T>
@@ -144,6 +152,7 @@ namespace Core
     MYGUI_API template<> Type* GetStaticType<uint32_t>();
     MYGUI_API template<> Type* GetStaticType<uint64_t>();
     MYGUI_API template<> Type* GetStaticType<std::string>();
+    MYGUI_API template<> Type* GetStaticType<std::any>();
 
     MYGUI_API template<> Type* GetStaticType<std::vector<std::any>>();
     MYGUI_API template<> Type* GetStaticType<std::map<void*, std::any>>();
@@ -183,6 +192,7 @@ namespace Core
         virtual Type* GetPointToType() const override { return _PointToType; }
     private:
         Type* _PointToType{ nullptr };
+
     private:
         template<typename T> friend Type* GetType();
     };
@@ -341,6 +351,11 @@ namespace Core
             return_type = GetStaticEnum<T>();
             return_type->_CastTypeFlag = ECastTypeFlagBits::CTFB_EnumBit;
             GetEnumNameMap().insert_or_assign(return_type->GetName(), static_cast<Enum*>(return_type));
+        }
+        else if constexpr (std::is_same_v<T, std::any>)
+        {
+            return_type = GetStaticType<T>();
+            return_type->_CastTypeFlag = ECastTypeFlagBits::CTFB_AnyBit;
         }
         else if constexpr (std::is_same_v<T, std::vector<std::any>>)
         {

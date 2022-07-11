@@ -55,6 +55,7 @@ namespace Core
 		{
 			IMPL_DEFAULT_TYPE_BASE_FUNCTION(CppType)
 			IMPL_DEFAULT_TYPE_ANY_ACCESSOR_FUNCTION(CppType)
+			_DefaultPtr = &_Default;
 		}
 		
 		virtual void SetEnumValue(void* type_instance_ptr, uint64_t value) const override
@@ -73,7 +74,8 @@ namespace Core
 		{
 			return static_cast<uint64_t>(*static_cast<CppType*>(type_instance_ptr));
 		}
-
+	protected:
+		CppType _Default;
 	};
 
 	// @test end

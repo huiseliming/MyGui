@@ -47,7 +47,10 @@ namespace Core
 		{
 			IMPL_DEFAULT_TYPE_BASE_FUNCTION(CppType)
 			IMPL_DEFAULT_TYPE_ANY_ACCESSOR_FUNCTION(CppType)
+			_DefaultPtr = &_Default;
 		}
+	protected:
+		CppType _Default;
 	};
 
 	// @test begin

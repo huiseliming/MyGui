@@ -424,31 +424,9 @@ namespace Core
         return return_type;
     }
 
-    template<typename T>
-    struct TCustomTypeModifier {
-        void operator()(Type* initialized_type) {}
-    };
-    template<typename T>
-    struct TDefaultTypeInitializer {
-        void operator()(Type* uninitialized_type) {}
-    };
-
-    template<typename T>
-    struct TTypeAutoInitializer {
-        TTypeAutoInitializer() {
-            Type* reflect_type = GetType<T>();
-            TDefaultTypeInitializer<T>()(reflect_type);
-            TCustomTypeModifier<T>()(reflect_type);
-        }
-    };
-
     MYGUI_API bool VerifyStaticTypeInitializationResult();
-
+    
 }
-
-
-
-
 
 
 

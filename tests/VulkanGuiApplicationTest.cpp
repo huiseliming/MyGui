@@ -89,7 +89,7 @@ public:
                     }
                 }
                 static Core::ETestEnum test_enum;
-                Core::Enum* reflect_enum = Core::GetStaticEnum<Core::ETestEnum>();
+                Core::Enum* reflect_enum = GetStaticEnum<Core::ETestEnum>();
                 auto& enum_value_map = reflect_enum->GetEnumValueMap();
                 std::vector<const Core::EnumValue*> enum_value_vector;
                 for (auto enum_value_map_iterator = enum_value_map.begin(); enum_value_map_iterator != enum_value_map.end(); enum_value_map_iterator++)

@@ -446,12 +446,12 @@ void CursorNodeLoop(TranslationUnitClientData& translation_unit_client_data_ref,
             CursorNodeLoop(translation_unit_client_data_ref, children_cursor_node);
 
             std::string class_source_template =R"(
-namespace {{namespace}}{
 template<>
-struct TDefaultTypeInitializer<{{name}}>
+struct TDefaultTypeInitializer<{{namespace}}::{{name}}>
 {
-    void operator()(Type* uninitialized_type)
+    void operator()(Core::Type* uninitialized_type)
     {
+        using namespace Core;
         Class* uninitialized_class = static_cast<Class*>(uninitialized_type);
 
 ## for parent_class in parent_classes
@@ -490,13 +490,14 @@ struct TDefaultTypeInitializer<{{name}}>
 ## endfor
     }
 };
-Class* {{name}}::StaticClass()
+Core::Class* {{namespace}}::{{name}}::StaticClass()
 {
-    static TClass<{{name}}> static_class("{{namespace}}::{{name}}");
+    using namespace Core;
+    static TClass<{{namespace}}::{{name}}> static_class("{{namespace}}::{{name}}");
     return &static_class;
 }
-static TTypeAutoInitializer<{{name}}> S{{name}}AutoInitializer;
-})";
+static TTypeAutoInitializer<{{namespace}}::{{name}}> S{{name}}AutoInitializer;
+)";
             
             children_cursor_node->_Data["namespace"] = GetNamespaceName(cursor_node);
             translation_unit_client_data_ref._GeneratedSourceCode += inja::render(class_source_template, children_cursor_node->_Data);
@@ -528,35 +529,36 @@ static TTypeAutoInitializer<{{name}}> S{{name}}AutoInitializer;
         {
             children_cursor_node->_Data["enum_constants"] = nlohmann::json::array();
             CursorNodeLoop(translation_unit_client_data_ref, children_cursor_node);
-
-            std::string enum_header_template = R"(
-#define STATIC_ENUM_{{name}} {{export_api_name}} template<> extern Enum* GetStaticEnum<{{name}}>();
-)";
             children_cursor_node->_Data["export_api_name"] = ApiName;
+            children_cursor_node->_Data["namespace"] = GetNamespaceName(cursor_node);
+            std::string enum_header_template = R"(
+#define STATIC_ENUM_{{name}} {{export_api_name}} template<> Core::Enum* GetStaticEnum<{{namespace}}::{{name}}>();
+)";
             translation_unit_client_data_ref._GeneratedHeaderCode += inja::render(enum_header_template, children_cursor_node->_Data) + "\n";
 
             std::string enum_source_template = R"(
-namespace {{namespace}}{
 template<>
-struct TDefaultTypeInitializer<{{name}}>
+struct TDefaultTypeInitializer<{{namespace}}::{{name}}>
 {
-    void operator()(Type* uninitialized_type)
+    void operator()(Core::Type* uninitialized_type)
     {
+        using namespace Core;
         Enum* uninitialized_enum = static_cast<Enum*>(uninitialized_type);
 ## for enum_constant in enum_constants
         uninitialized_enum->_EnumValueMap.insert(std::make_pair({{name}}::{{enum_constant.name}}, EnumValue{ {{name}}::{{enum_constant.name}}, "{{enum_constant.name}}", "{{enum_constant.display_name}}" }));
 ## endfor
     }
 };
+
 template<>
-Enum* GetStaticEnum<{{name}}>()
+Core::Enum* GetStaticEnum<{{namespace}}::{{name}}>()
 {
-	static TEnum<{{name}}> static_enum("{{namespace}}::{{name}}");
+    using namespace Core;
+	static TEnum<{{namespace}}::{{name}}> static_enum("{{namespace}}::{{name}}");
 	return &static_enum;
 }
-static TTypeAutoInitializer<{{name}}> S{{name}}AutoInitializer;
-})";
-            children_cursor_node->_Data["namespace"] = GetNamespaceName(cursor_node);
+static TTypeAutoInitializer<{{namespace}}::{{name}}> S{{name}}AutoInitializer;
+)";
             translation_unit_client_data_ref._GeneratedSourceCode += inja::render(enum_source_template, children_cursor_node->_Data);
             break;
         }

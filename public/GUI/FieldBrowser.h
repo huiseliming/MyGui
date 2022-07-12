@@ -45,8 +45,6 @@ namespace GUI
             ImGui::TableNextColumn();
             ImGuiTreeNodeFlags tree_node_flag = ImGuiTreeNodeFlags_SpanFullWidth;
             uint32_t target_cast_type_flag = type_ptr->GetCastTypeFlag();
-            Type* target_type_ptr = type_ptr;
-            void* target_type_instance_ptr = type_instance_ptr;
             if (type_ptr->GetCastTypeFlag() & CTFB_AnyBit)
             {
                 std::any* any_ptr = static_cast<std::any*>(type_instance_ptr);
@@ -54,8 +52,6 @@ namespace GUI
                 {
                     Type* any_type_ptr = GetType(any_ptr->type());
                     target_cast_type_flag = any_type_ptr->GetCastTypeFlag();
-                    target_type_ptr = any_type_ptr;
-                    target_type_instance_ptr = any_type_ptr->GetAny(*any_ptr);
                 }
                 else
                 {
@@ -96,6 +92,8 @@ namespace GUI
             }
             if (tree_opened && !(tree_node_flag & ImGuiTreeNodeFlags_NoTreePushOnOpen))
             {
+                Type* target_type_ptr = type_ptr;
+                void* target_type_instance_ptr = type_instance_ptr;
                 if (type_ptr->GetCastTypeFlag() & CTFB_AnyBit)
                 {
                     std::any* any_ptr = static_cast<std::any*>(type_instance_ptr);

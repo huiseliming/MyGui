@@ -2,6 +2,7 @@
 #include <any>
 #include <string>
 #include <vector>
+#include "MyGuiExport.h"
 #include "Object.gen.h"
 
 #ifdef __RUN_CODE_GENERATOR__
@@ -31,21 +32,47 @@ public:														\
 GENERATED_CLASS_BODY()                                       \
 virtual Class* GetClass() override { return StaticClass(); } \
 
-
 namespace Core
 {
 	class Class;
 	class Enum;
+	class Type;
+}
 
-	template<typename T> Enum* GetStaticEnum() { return nullptr; }
+template<typename T>
+struct TCustomTypeModifier {
+	void operator()(Core::Type* initialized_type) {}
+};
+template<typename T>
+struct TDefaultTypeInitializer {
+	void operator()(Core::Type* uninitialized_type) {}
+};
 
-	class CLASS() Object 
+template<typename T>
+struct TTypeAutoInitializer {
+	TTypeAutoInitializer() {
+		using namespace Core;
+		Type* reflect_type = GetType<T>();
+		TDefaultTypeInitializer<T>()(reflect_type);
+		TCustomTypeModifier<T>()(reflect_type);
+	}
+};
+
+namespace Core
+{
+	class CLASS() Object
 	{
 		GENERATED_CLASS_BODY()
 	public:
 		virtual Class* GetClass() { return StaticClass(); }
 	};
 
+}
+
+template<typename T> Core::Enum* GetStaticEnum() { return nullptr; }
+
+namespace Core
+{
 	// @test begin
 	enum ENUM() ETestEnum
 	{
@@ -57,9 +84,6 @@ namespace Core
 		TE_5 METADATA(DisplayName = TestFive),
 		TE_6 METADATA(DisplayName = "测试6"),
 	};
-#ifdef STATIC_ENUM_ETestEnum
-	STATIC_ENUM_ETestEnum
-#endif // STATIC_ENUM_ETestEnum
 
 	//MYGUI_API
 	//template<>
@@ -101,4 +125,8 @@ namespace Core
 	};
 
 }
+
+#ifdef STATIC_ENUM_ETestEnum
+STATIC_ENUM_ETestEnum
+#endif // STATIC_ENUM_ETestEnum
 

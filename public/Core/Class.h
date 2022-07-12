@@ -111,16 +111,15 @@ namespace Core
 		}
 	};
 
-	MYGUI_API 
-	template<> 
-	struct TCustomTypeModifier<TestStruct>
-	{
-		void operator()(Type* uninitialized_type);
-	};
 	// @test end
 }
 
-
+MYGUI_API
+template<>
+struct TCustomTypeModifier<Core::TestStruct>
+{
+	void operator()(Core::Type* uninitialized_type);
+};
 
 
 

@@ -12,7 +12,6 @@
 #include <typeinfo>
 #include <typeindex>
 #include <functional>
-#include "MyGuiExport.h"
 #include "Object.h"
 
 namespace Core

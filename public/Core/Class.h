@@ -5,7 +5,7 @@
 namespace Core
 {
 
-	class MYGUI_API CLASS() Class : public Struct
+	class MYCPP_API CLASS() Class : public Struct
 	{
 		GENERATED_OBJECT_BODY()
 	public:
@@ -114,7 +114,7 @@ namespace Core
 	// @test end
 }
 
-MYGUI_API
+MYCPP_API
 template<>
 struct TCustomTypeModifier<Core::TestStruct>
 {

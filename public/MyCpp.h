@@ -1,3 +1,3 @@
 #pragma once
-#include "MyGuiExport.h"
+#include "MyCppExport.h"
 #include "VulkanGuiApplication.h"

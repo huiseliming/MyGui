@@ -1,6 +1,6 @@
 #include <catch2/catch.hpp>
 #include <thread>
-#include "MyGui.h"
+#include "MyCpp.h"
 
 TEST_CASE("ThreadTaskQueue")
 {

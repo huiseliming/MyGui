@@ -1,12 +1,12 @@
 #pragma once
-#include "MyGuiForward.h"
+#include "MyCppForward.h"
 
 class ThreadTaskQueue;
 
-MYGUI_API extern std::unordered_map<std::thread::id, ThreadTaskQueue*> G_ThreadIdToTaskQueueMap;
-MYGUI_API ThreadTaskQueue& CurrentThreadTaskQueueRef();
+MYCPP_API extern std::unordered_map<std::thread::id, ThreadTaskQueue*> G_ThreadIdToTaskQueueMap;
+MYCPP_API ThreadTaskQueue& CurrentThreadTaskQueueRef();
 
-class MYGUI_API ThreadTaskQueue
+class MYCPP_API ThreadTaskQueue
 {
 public:
     void EnqueueTask(const std::function<void()>& task)

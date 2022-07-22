@@ -71,7 +71,7 @@ namespace Core
     template<> struct TStaticBuiltinTypeFlag<double>      { static constexpr ECastTypeFlagBits Value = ECastTypeFlagBits::CTFB_DoubleBit; };
     template<> struct TStaticBuiltinTypeFlag<std::string> { static constexpr ECastTypeFlagBits Value = ECastTypeFlagBits::CTFB_StringBit; };
 
-    class MYGUI_API CLASS() Type : public Record
+    class MYCPP_API CLASS() Type : public Record
 	{
         GENERATED_OBJECT_BODY()
 	public:
@@ -140,42 +140,42 @@ namespace Core
     };
 
     template<typename T> Type* GetStaticType() { return nullptr; }
-    MYGUI_API template<> Type* GetStaticType<bool>();
-    MYGUI_API template<> Type* GetStaticType<float>();
-    MYGUI_API template<> Type* GetStaticType<double>();
-    MYGUI_API template<> Type* GetStaticType<int8_t>();
-    MYGUI_API template<> Type* GetStaticType<int16_t>();
-    MYGUI_API template<> Type* GetStaticType<int32_t>();
-    MYGUI_API template<> Type* GetStaticType<int64_t>();
-    MYGUI_API template<> Type* GetStaticType<uint8_t>();
-    MYGUI_API template<> Type* GetStaticType<uint16_t>();
-    MYGUI_API template<> Type* GetStaticType<uint32_t>();
-    MYGUI_API template<> Type* GetStaticType<uint64_t>();
-    MYGUI_API template<> Type* GetStaticType<std::string>();
-    MYGUI_API template<> Type* GetStaticType<std::any>();
+    MYCPP_API template<> Type* GetStaticType<bool>();
+    MYCPP_API template<> Type* GetStaticType<float>();
+    MYCPP_API template<> Type* GetStaticType<double>();
+    MYCPP_API template<> Type* GetStaticType<int8_t>();
+    MYCPP_API template<> Type* GetStaticType<int16_t>();
+    MYCPP_API template<> Type* GetStaticType<int32_t>();
+    MYCPP_API template<> Type* GetStaticType<int64_t>();
+    MYCPP_API template<> Type* GetStaticType<uint8_t>();
+    MYCPP_API template<> Type* GetStaticType<uint16_t>();
+    MYCPP_API template<> Type* GetStaticType<uint32_t>();
+    MYCPP_API template<> Type* GetStaticType<uint64_t>();
+    MYCPP_API template<> Type* GetStaticType<std::string>();
+    MYCPP_API template<> Type* GetStaticType<std::any>();
 
-    MYGUI_API template<> Type* GetStaticType<std::vector<std::any>>();
-    MYGUI_API template<> Type* GetStaticType<std::map<void*, std::any>>();
-    MYGUI_API template<> Type* GetStaticType<std::map<int64_t, std::any>>();
-    MYGUI_API template<> Type* GetStaticType<std::map<std::string, std::any>>();
-    MYGUI_API template<> Type* GetStaticType<std::unordered_map<void*, std::any>>();
-    MYGUI_API template<> Type* GetStaticType<std::unordered_map<int64_t, std::any>>();
-    MYGUI_API template<> Type* GetStaticType<std::unordered_map<std::string, std::any>>();
+    MYCPP_API template<> Type* GetStaticType<std::vector<std::any>>();
+    MYCPP_API template<> Type* GetStaticType<std::map<void*, std::any>>();
+    MYCPP_API template<> Type* GetStaticType<std::map<int64_t, std::any>>();
+    MYCPP_API template<> Type* GetStaticType<std::map<std::string, std::any>>();
+    MYCPP_API template<> Type* GetStaticType<std::unordered_map<void*, std::any>>();
+    MYCPP_API template<> Type* GetStaticType<std::unordered_map<int64_t, std::any>>();
+    MYCPP_API template<> Type* GetStaticType<std::unordered_map<std::string, std::any>>();
 
-    MYGUI_API std::unordered_map<std::string, Class*>& GetClassNameMap();
-    MYGUI_API std::unordered_map<std::string, Enum*>& GetEnumNameMap();
-    MYGUI_API extern std::unordered_map<std::string, Class*>& global_class_name_map_ref;
-    MYGUI_API extern std::unordered_map<std::string, Enum*>& global_enum_name_map_ref;
+    MYCPP_API std::unordered_map<std::string, Class*>& GetClassNameMap();
+    MYCPP_API std::unordered_map<std::string, Enum*>& GetEnumNameMap();
+    MYCPP_API extern std::unordered_map<std::string, Class*>& global_class_name_map_ref;
+    MYCPP_API extern std::unordered_map<std::string, Enum*>& global_enum_name_map_ref;
 
-    MYGUI_API std::vector<Class*> GetRootClasses();
+    MYCPP_API std::vector<Class*> GetRootClasses();
 
-    MYGUI_API Enum* FindEnum(const std::string& enum_name);
-    MYGUI_API Class* FindClass(const std::string& class_name);
+    MYCPP_API Enum* FindEnum(const std::string& enum_name);
+    MYCPP_API Class* FindClass(const std::string& class_name);
 
-    MYGUI_API std::unordered_map<std::type_index, Type*>& GetTypeIndexMap();
-    MYGUI_API extern std::unordered_map<std::type_index, Type*>& global_type_index_map;
+    MYCPP_API std::unordered_map<std::type_index, Type*>& GetTypeIndexMap();
+    MYCPP_API extern std::unordered_map<std::type_index, Type*>& global_type_index_map;
 
-    MYGUI_API Type* GetType(const std::type_info& type_info);
+    MYCPP_API Type* GetType(const std::type_info& type_info);
 
     // 
     class PointerType : public Type
@@ -197,9 +197,9 @@ namespace Core
         template<typename T> friend Type* GetType();
     };
 
-    MYGUI_API std::vector<std::unique_ptr<PointerType>>& GetStaticPointerTypes();
-    MYGUI_API std::unordered_map<std::type_index, PointerType*>& GetUninitializePointerTypeMap();
-    MYGUI_API std::unordered_map<std::type_index, Type*>& GetPointerTypePointToTypeIndexMap();
+    MYCPP_API std::vector<std::unique_ptr<PointerType>>& GetStaticPointerTypes();
+    MYCPP_API std::unordered_map<std::type_index, PointerType*>& GetUninitializePointerTypeMap();
+    MYCPP_API std::unordered_map<std::type_index, Type*>& GetPointerTypePointToTypeIndexMap();
 
     template<typename T>
     struct IsReflectClassType
@@ -270,9 +270,9 @@ namespace Core
             std::remove_cv_t<T>
         >;
 
-    MYGUI_API std::vector<std::unique_ptr<ReferenceWrapperType>>& GetStaticReferenceWrapperTypes();
-    MYGUI_API std::unordered_map<std::type_index, ReferenceWrapperType*>& GetUninitializeReferenceWrapperTypeMap();
-    MYGUI_API std::unordered_map<std::type_index, Type*>& GetReferenceWrapperTypeWrappedTypeMap();
+    MYCPP_API std::vector<std::unique_ptr<ReferenceWrapperType>>& GetStaticReferenceWrapperTypes();
+    MYCPP_API std::unordered_map<std::type_index, ReferenceWrapperType*>& GetUninitializeReferenceWrapperTypeMap();
+    MYCPP_API std::unordered_map<std::type_index, Type*>& GetReferenceWrapperTypeWrappedTypeMap();
 
     template<typename T>
     constexpr bool ConstexprTrue = true;
@@ -424,7 +424,7 @@ namespace Core
         return return_type;
     }
 
-    MYGUI_API bool VerifyStaticTypeInitializationResult();
+    MYCPP_API bool VerifyStaticTypeInitializationResult();
     
 }
 

@@ -18,7 +18,7 @@ endif(WIN32)
 message("CMAKE_TOOLCHAIN_FILE: " ${CMAKE_TOOLCHAIN_FILE})
 message("VCPKG_TARGET_TRIPLET: " ${VCPKG_TARGET_TRIPLET})
 
-project(MyGui LANGUAGES C CXX)
+project(MyCpp LANGUAGES C CXX)
 
 if(WIN32)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /MP")
@@ -64,15 +64,15 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake/)
 include(my_code_generator)
 find_my_code_generator("${CMAKE_CURRENT_SOURCE_DIR}/code_generator/")
 run_my_code_generator(
-    MyGui-CodeGenerator         #TargetName
+    MyCpp-CodeGenerator         #TargetName
     ${CMAKE_BINARY_DIR}         #CompilationDatabaseDir
     ${CMAKE_CURRENT_BINARY_DIR} #GeneratedFileOutputDir
-    MYGUI_API                   #ExportApi
+    MYCPP_API                   #ExportApi
     OriginalHeaders             #InputHeaders
     GeneratedFiles              #OutputFiles
 )
-add_library(MyGui ${PublicSource} ${PrivateSource} ${ImGuiSource} ${GeneratedFiles})
-add_dependencies(MyGui MyGui-CodeGenerator)
+add_library(MyCpp ${PublicSource} ${PrivateSource} ${ImGuiSource} ${GeneratedFiles})
+add_dependencies(MyCpp MyCpp-CodeGenerator)
 
 source_group(
   TREE ${CMAKE_CURRENT_SOURCE_DIR} 
@@ -86,46 +86,46 @@ source_group(
   FILES ${GeneratedFiles}
 )
 
-target_include_directories(MyGui PUBLIC
+target_include_directories(MyCpp PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/public>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/public>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
     $<INSTALL_INTERFACE:public>
 )
-target_include_directories(MyGui PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/third_party/imgui)
+target_include_directories(MyCpp PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/third_party/imgui)
 
 find_package(spdlog CONFIG REQUIRED)
-target_link_libraries(MyGui PUBLIC spdlog::spdlog spdlog::spdlog_header_only)
+target_link_libraries(MyCpp PUBLIC spdlog::spdlog spdlog::spdlog_header_only)
 
 find_package(glfw3 CONFIG REQUIRED)
-target_link_libraries(MyGui PUBLIC glfw)
+target_link_libraries(MyCpp PUBLIC glfw)
 
 # find_package(glm CONFIG REQUIRED)
-# target_link_libraries(MyGui PUBLIC glm::glm)
+# target_link_libraries(MyCpp PUBLIC glm::glm)
 
 find_package(Vulkan REQUIRED)
-target_link_libraries(MyGui PUBLIC Vulkan::Vulkan)
+target_link_libraries(MyCpp PUBLIC Vulkan::Vulkan)
 
 find_package(minhook CONFIG REQUIRED)
-target_link_libraries(MyGui PRIVATE minhook::minhook)
+target_link_libraries(MyCpp PRIVATE minhook::minhook)
 
 find_package(minhook CONFIG REQUIRED)
-target_link_libraries(MyGui PRIVATE minhook::minhook)
+target_link_libraries(MyCpp PRIVATE minhook::minhook)
 
 find_package(Poco CONFIG REQUIRED Util)
-target_link_libraries(MyGui PUBLIC Poco::Util)
+target_link_libraries(MyCpp PUBLIC Poco::Util)
 
-# add_custom_command(TARGET MyGui POST_BUILD
+# add_custom_command(TARGET MyCpp POST_BUILD
 #   COMMAND ${CMAKE_COMMAND} -E copy_directory
 #   ${CMAKE_CURRENT_SOURCE_DIR}/assets
-#   $<TARGET_FILE_DIR:MyGui>
+#   $<TARGET_FILE_DIR:MyCpp>
 #   ${CMAKE_BINARY_DIR}
 # )
 
 include(GenerateExportHeader)
-generate_export_header(MyGui
-    EXPORT_MACRO_NAME MYGUI_API
-    EXPORT_FILE_NAME ${CMAKE_CURRENT_BINARY_DIR}/public/MyGuiExport.h
+generate_export_header(MyCpp
+    EXPORT_MACRO_NAME MYCPP_API
+    EXPORT_FILE_NAME ${CMAKE_CURRENT_BINARY_DIR}/public/MyCppExport.h
 )
 
 add_subdirectory(tests)

@@ -1,8 +1,8 @@
 #pragma once
-#include "MyGuiForward.h"
+#include "MyCppForward.h"
 #include <spdlog/spdlog.h>
 
-class MYGUI_API CoreApplication
+class MYCPP_API CoreApplication
 {
 public:
 	CoreApplication() = default;
@@ -39,4 +39,4 @@ protected:
 	bool bRequestExit = false;
 };
 
-MYGUI_API extern CoreApplication* GCoreApplication;
+MYCPP_API extern CoreApplication* GCoreApplication;

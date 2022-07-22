@@ -124,7 +124,7 @@ int main(int ArgC, char* ArgV[])
         return EXIT_FAILURE;
     }
     {
-        // -MYGUI_API
+        // -MYCPP_API
         ApiName = &ArgV[3][1];
         GeneratedOuputDir = ArgV[2];
 

@@ -10,7 +10,7 @@
 #include <cassert>
 #include <functional>
 
-#include "MyGuiExport.h"
+#include "MyCppExport.h"
 #include "Queue.h"
 #include "ThreadTaskQueue.h"
 #include "Core/Reflect.h"

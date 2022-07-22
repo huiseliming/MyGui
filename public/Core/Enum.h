@@ -11,9 +11,9 @@ namespace Core
 		std::string _DisplayName;
 	};
 
-	MYGUI_API extern EnumValue EmptyEnumValue;
+	MYCPP_API extern EnumValue EmptyEnumValue;
 
-	class MYGUI_API CLASS() Enum : public Type
+	class MYCPP_API CLASS() Enum : public Type
 	{
 		GENERATED_OBJECT_BODY()
 	public:

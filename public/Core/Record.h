@@ -19,7 +19,7 @@ namespace Core
 	class Enum;
 	class Class;
 
-	class MYGUI_API CLASS() Record : public Object
+	class MYCPP_API CLASS() Record : public Object
 	{
 		GENERATED_OBJECT_BODY()
 	public:

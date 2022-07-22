@@ -6,16 +6,16 @@ add_executable(Tests
 	QueueTest.cpp
 )
 
-target_link_libraries(Tests PRIVATE MyGui)
+target_link_libraries(Tests PRIVATE MyCpp)
 
 find_package(Catch2 CONFIG REQUIRED)
 target_link_libraries(Tests PRIVATE Catch2::Catch2)
 set_property(TARGET Tests PROPERTY VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_BINARY_DIR}")
 
 add_executable(CoreApplicationTest CoreApplicationTest.cpp)
-target_link_libraries(CoreApplicationTest PUBLIC MyGui)
+target_link_libraries(CoreApplicationTest PUBLIC MyCpp)
 set_property(TARGET CoreApplicationTest PROPERTY VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_BINARY_DIR}")
 
 add_executable(VulkanGuiApplicationTest VulkanGuiApplicationTest.cpp)
-target_link_libraries(VulkanGuiApplicationTest PUBLIC MyGui)
+target_link_libraries(VulkanGuiApplicationTest PUBLIC MyCpp)
 set_property(TARGET VulkanGuiApplicationTest PROPERTY VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_BINARY_DIR}")

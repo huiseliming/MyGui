@@ -6,7 +6,7 @@ namespace Core
 {
 	class Class;
 
-	class MYGUI_API CLASS() Struct : public Type
+	class MYCPP_API CLASS() Struct : public Type
 	{
 		GENERATED_OBJECT_BODY()
 	public:

@@ -1,12 +1,12 @@
 #pragma once
-#include "MyGuiForward.h"
+#include "MyCppForward.h"
 #include "CoreApplication.h"
 #include "GuiDrawObject.h"
 #include <spdlog/spdlog.h> 
 #include <Poco/Util/Application.h>
 #include <Poco/Util/HelpFormatter.h>
 
-#define IMGUI_API MYGUI_API
+#define IMGUI_API MYCPP_API
 #define IMGUI_IMPL_API IMGUI_API
 #include "../third_party/imgui/imgui.h"
 #include "../third_party/imgui/misc/cpp/imgui_stdlib.h"
@@ -18,9 +18,9 @@ constexpr static int MaxFramesInFlight = 2;
 
 static void FramebufferResizeCallback(GLFWwindow* window, int width, int height);
 
-MYGUI_API VkSurfaceFormatKHR ImGui_ImplVulkanH_SelectSurfaceFormat_HookFunction(VkPhysicalDevice physical_device, VkSurfaceKHR surface, const VkFormat* request_formats, int request_formats_count, VkColorSpaceKHR request_color_space);
+MYCPP_API VkSurfaceFormatKHR ImGui_ImplVulkanH_SelectSurfaceFormat_HookFunction(VkPhysicalDevice physical_device, VkSurfaceKHR surface, const VkFormat* request_formats, int request_formats_count, VkColorSpaceKHR request_color_space);
 
-class MYGUI_API TaskQueueSubsystem : public Poco::Util::Subsystem
+class MYCPP_API TaskQueueSubsystem : public Poco::Util::Subsystem
 {
 	using Super = Poco::Util::Subsystem;
 public:
@@ -67,7 +67,7 @@ protected:
 
 
 
-class MYGUI_API VulkanGuiApplication : public Poco::Util::Application
+class MYCPP_API VulkanGuiApplication : public Poco::Util::Application
 {
 	using Super = Poco::Util::Application;
 public:

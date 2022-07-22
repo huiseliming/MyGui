@@ -2,7 +2,7 @@
 #include <any>
 #include <string>
 #include <vector>
-#include "MyGuiExport.h"
+#include "MyCppExport.h"
 #include "Object.gen.h"
 
 #ifdef __RUN_CODE_GENERATOR__
@@ -85,7 +85,7 @@ namespace Core
 		TE_6 METADATA(DisplayName = "测试6"),
 	};
 
-	//MYGUI_API
+	//MYCPP_API
 	//template<>
 	//struct TCustomTypeModifier<ETestEnum>
 	//{

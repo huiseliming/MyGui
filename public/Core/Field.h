@@ -11,7 +11,7 @@ namespace Core
 	//	FFB_RValueRefBits = FFB_LValueRefBit | FFB_RValueRefBit,
 	//};
 
-	class MYGUI_API CLASS() Field : public Record
+	class MYCPP_API CLASS() Field : public Record
 	{
 		GENERATED_OBJECT_BODY()
 	public:
@@ -91,7 +91,7 @@ namespace Core
 		}
 	};
 
-	class MYGUI_API BoolField : public Field
+	class MYCPP_API BoolField : public Field
 	{
 		using FieldAccessor = TFieldAccessor<bool>;
 	public:
@@ -162,16 +162,16 @@ namespace Core
 		}
 	};
 
-	MYGUI_API template class TNumericField<int8_t>;
-	MYGUI_API template class TNumericField<int16_t>;
-	MYGUI_API template class TNumericField<int32_t>;
-	MYGUI_API template class TNumericField<int64_t>;
-	MYGUI_API template class TNumericField<int8_t>;
-	MYGUI_API template class TNumericField<int16_t>;
-	MYGUI_API template class TNumericField<int32_t>;
-	MYGUI_API template class TNumericField<int64_t>;
-	MYGUI_API template class TNumericField<float>;
-	MYGUI_API template class TNumericField<double>;
+	MYCPP_API template class TNumericField<int8_t>;
+	MYCPP_API template class TNumericField<int16_t>;
+	MYCPP_API template class TNumericField<int32_t>;
+	MYCPP_API template class TNumericField<int64_t>;
+	MYCPP_API template class TNumericField<int8_t>;
+	MYCPP_API template class TNumericField<int16_t>;
+	MYCPP_API template class TNumericField<int32_t>;
+	MYCPP_API template class TNumericField<int64_t>;
+	MYCPP_API template class TNumericField<float>;
+	MYCPP_API template class TNumericField<double>;
 
 	using SInt8Field  = TNumericField<int8_t>;
 	using SInt16Field = TNumericField<int16_t>;
@@ -185,7 +185,7 @@ namespace Core
 	using DoubleField = TNumericField<double>;
 
 
-	class MYGUI_API StringField : public  Field
+	class MYCPP_API StringField : public  Field
 	{
 		using FieldAccessor = TFieldAccessor<std::string>;
 	public:
@@ -230,7 +230,7 @@ namespace Core
 		}
 	};
 
-	class MYGUI_API ClassField : public Field
+	class MYCPP_API ClassField : public Field
 	{
 	public:
 		ClassField(const std::string& name = "", uint32_t memory_offset = 0, Type* type = nullptr)
@@ -248,7 +248,7 @@ namespace Core
 
 	};
 
-	class MYGUI_API EnumField : public Field
+	class MYCPP_API EnumField : public Field
 	{
 	public:
 		EnumField(const std::string& name = "", uint32_t memory_offset = 0, Type* type = nullptr)
@@ -283,7 +283,7 @@ namespace Core
 	};
 
 	template<typename T>
-	class MYGUI_API TPointerField : public Field
+	class MYCPP_API TPointerField : public Field
 	{
 	public:
 		TPointerField(const std::string& name = "", uint32_t memory_offset = 0, Type* type = nullptr)
